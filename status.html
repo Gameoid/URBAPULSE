@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrbaPulse | Node Analytics</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--success);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .dot {
+            height: 8px; width: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            box-shadow: 0 0 10px var(--success);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 40px;
+            border-radius: 16px;
+            position: relative;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .metric-unit {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+
+        .status-tag {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border: 1px solid currentColor;
+        }
+
+        .tag-danger { color: var(--danger); }
+        .tag-safe { color: var(--success); }
+
+        .sensor-info {
+            margin-top: 40px;
+            padding: 24px;
+            background: rgba(0, 210, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html" class="logo" style="text-decoration: none;">URBAPULSE</a>
+        <div class="live-indicator">
+            <span class="dot"></span> ESP32 Node-17-Alpha: Connected
+        </div>
+    </nav>
+
+    <main class="container" style="padding-top: 60px;">
+        <div class="status-header">
+            <div>
+                <h2 style="margin: 0;">Node Analytics</h2>
+                <p style="color: var(--text-muted);">Real-time telemetry from Sector 17, Faridabad.</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Last Sync: <span id="time">Just now</span></p>
+            </div>
+        </div>
+
+        <div class="data-grid">
+            <!-- Temperature Card -->
+            <div class="metric-card">
+                <span class="status-tag tag-danger">Critical</span>
+                <p class="metric-label">Ambient Temperature</p>
+                <p class="metric-value">43<span class="metric-unit">°C</span></p>
+                <p style="font-size: 0.8rem; margin-top: 15px; color: var(--text-muted);">
+                    Triggering Ultrasonic Misters...
+                </p>
+            </div>
+
+            <!-- AQI Card -->
+            <div class="metric-card">
+                <span class="status-tag tag-danger" style="color: #ff9f43;">Poor</span>
+                <p class="metric-label">Air Quality Index (MQ-135)</p>
+                <p class="metric-value">168<span class="metric-unit">AQI</span></p>
+                <p style="font-size: 0.8rem; margin-top: 15px; color: var(--text-muted);">
+                    Primary Pollutants: CO₂ & NH₃
+                </p>
+            </div>
+
+            <!-- Humidity Card -->
+            <div class="metric-card">
+                <span class="status-tag tag-safe">Stable</span>
+                <p class="metric-label">Relative Humidity</p>
+                <p class="metric-value">14<span class="metric-unit">%</span></p>
+            </div>
+
+            <!-- Carbon Level Card -->
+            <div class="metric-card">
+                <span class="status-tag tag-safe">Safe</span>
+                <p class="metric-label">Carbon Concentration</p>
+                <p class="metric-value">412<span class="metric-unit">PPM</span></p>
+            </div>
+        </div>
+
+        <!-- System Logic Section -->
+        <div class="sensor-info">
+            <h4 style="margin: 0 0 10px; color: var(--accent);">Shielding Logic: Stevenson Screen</h4>
+            <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+                Sensors are positioned 1-inch below the solar canopy. This creates a natural aspiration zone, protecting the DHT22 from direct solar radiation (heat soak) while allowing ambient air flow for ±0.5°C accuracy.
+            </p>
+        </div>
+    </main>
+
+    <script>
+        // Simple script to update the time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').innerText = now.toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+    </script>
+
+</body>
+</html>

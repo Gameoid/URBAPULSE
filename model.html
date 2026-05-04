@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrbaPulse | Project Blueprint</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .model-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 50px;
+            margin-top: 40px;
+            align-items: start;
+        }
+
+        /* Sidebar Styling */
+        .anatomy-list {
+            padding-right: 20px;
+        }
+
+        .anatomy-item {
+            margin-bottom: 32px;
+            padding: 20px;
+            background: var(--surface);
+            border-radius: 12px;
+            border-left: 4px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .anatomy-item:hover {
+            border-left-color: var(--accent);
+            background: rgba(0, 210, 255, 0.05);
+        }
+
+        .anatomy-item h4 {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .anatomy-item p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Image Display Styling */
+        .blueprint-container {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            position: sticky;
+            top: 40px;
+        }
+
+        .blueprint-image {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            filter: contrast(1.1) brightness(1.1); /* Subtle polish for the photo */
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            display: block;
+        }
+
+        .caption {
+            display: block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-align: center;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html" class="logo" style="text-decoration: none;">URBAPULSE</a>
+        <div style="color: var(--text-muted); font-size: 0.8rem;">PHYSICAL PROTOTYPE BLUEPRINT</div>
+    </nav>
+
+    <main class="container">
+        <div class="model-layout">
+            
+            <!-- SIDEBAR: Infrastructure Details -->
+            <aside class="anatomy-list">
+                <h2 style="margin-top: 0; margin-bottom: 10px;">The Layout</h2>
+                <p style="color: var(--text-muted); margin-bottom: 40px; font-size: 0.95rem;">
+                    Our physical model is mapped into three distinct functional sectors:
+                </p>
+
+                <div class="anatomy-item">
+                    <h4>Zone A: The Heat Zone</h4>
+                    <p>Traditional high-density asphalt areas. This zone features our <b>Red LED</b> navigation triggers and monitoring sensors.</p>
+                </div>
+
+                <div class="anatomy-item">
+                    <h4>Zone B: The Blue Zone</h4>
+                    <p>The resilience sector featuring <b>Cool Pavement</b>, subsurface hydronic loops, and strategic tree placement.</p>
+                </div>
+
+                <div class="anatomy-item">
+                    <h4>Infrastructure Nodes</h4>
+                    <p>Includes <b>Solar-Powered Bus Stands</b> which act as our main IoT hubs, housing the ESP32 and Ultrasonic Misters.</p>
+                </div>
+
+                <div class="anatomy-item">
+                    <h4>Civic Pathways</h4>
+                    <p>Designed with <b>High Albedo</b> materials to reflect solar radiation, creating a cooler micro-climate for pedestrians.</p>
+                </div>
+            </aside>
+
+            <!-- IMAGE SECTION: Your Sketch -->
+            <section class="blueprint-container">
+                <img src="media\photos\basic model.jpeg" alt="Project Sketch" class="blueprint-image">
+                <span class="caption">Original Schematic: Urban Grid & Sensor Distribution (Sec-17, Faridabad)</span>
+            </section>
+
+        </div>
+    </main>
+
+</body>
+</html>

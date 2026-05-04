@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UrbaPulse | Control Center</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* This ensures the title and boxes have the exact spacing from your screenshot */
+        .hero { 
+            padding: 120px 0 40px; /* Slightly more top space for that 'clean' look */
+            text-align: center; 
+        }
+        
+        .hero h1 { 
+            font-size: 3.5rem; 
+            margin: 0 0 10px; 
+            font-weight: 700;
+        }
+
+        .hero p {
+            max-width: 600px;
+            margin: 0 auto 60px; /* Large bottom margin to separate from cards */
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Strict 3-column grid to match image_d5611c.png */
+        .menu-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 24px; 
+            padding-bottom: 100px;
+            max-width: 1100px; /* Slightly tighter than container for better focus */
+            margin: 0 auto;
+        }
+
+        /* Centering the icons exactly like the mockup */
+        .card-icon {
+            font-size: 28px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        @media (max-width: 992px) { 
+            .menu-grid { grid-template-columns: repeat(2, 1fr); } 
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="logo">URBAPULSE</a>
+        <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; letter-spacing: 1px;">SEC-17 FARIDABAD HUB</div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <h1>City Resilience Engine</h1>
+            <p>Advancing urban thermal management through high-albedo infrastructure and real-time IoT sensory networks.</p>
+        </section>
+
+        <div class="menu-grid">
+            <!-- Row 1 -->
+            <a href="maps.html" class="card">
+                <span class="card-icon">🗺️</span>
+                <h3>Better Maps</h3>
+                <p>Access the Health-Gradient navigation system for optimized thermal routing.</p>
+            </a>
+
+            <a href="model.html" class="card">
+                <span class="card-icon">📦</span>
+                <h3>Project Blueprint</h3>
+                <p>Detailed schematic of the physical Urban Grid prototype and infrastructure nodes.</p>
+            </a>
+
+            <a href="status.html" class="card">
+                <span class="card-icon">📊</span>
+                <h3>Node Analytics</h3>
+                <p>Live telemetry from ESP32 sensor grid: AQI, Temperature, and CO₂.</p>
+            </a>
+
+            <!-- Row 2 -->
+            <a href="complain.html" class="card">
+                <span class="card-icon">⚠️</span>
+                <h3>Civic Action</h3>
+                <p>Public reporting interface for anomalous thermal readings and pollution hotspots.</p>
+            </a>
+
+            <a href="about.html" class="card">
+                <span class="card-icon">ℹ️</span>
+                <h3>Documentation</h3>
+                <p>Technical specifications of the Stevenson Screen and Project Architects info.</p>
+            </a>
+
+            <!-- The Admin Portal card keeps the grid 3x2 and symmetrical -->
+            <div class="card" style="opacity: 0.4; border-style: dashed;">
+                <span class="card-icon">🔒</span>
+                <h3>Admin Portal</h3>
+                <p>Restricted access for Municipal Corporation of Faridabad authorities.</p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

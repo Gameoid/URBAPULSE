@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+    --bg: #0b0f19;
+    --surface: rgba(21, 27, 40, 0.7); /* Keeping this semi-transparent for the glass effect */
+    --accent: #00d2ff;
+    --danger: #ff4b2b;
+    --success: #27ae60;
+    --text-main: #ffffff;
+    --text-muted: #8b9bb4;
+    --border: rgba(255, 255, 255, 0.15); /* Slightly boosted border for visibility */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    margin: 0;
+    background-color: var(--bg);
+    
+    /* Removed the linear-gradient overlay as requested */
+    background-image: url('../media/photos/BG.png');
+    
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+}
+
+/* ... keep the rest of your card and nav styles the same ... */
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+}
+
+nav {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    /* Keeping the blur on nav for a premium glass feel */
+    backdrop-filter: blur(15px); 
+    background: rgba(11, 15, 25, 0.4);
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.card {
+    background: var(--surface);
+    backdrop-filter: blur(20px); /* Increased blur to help text readability over the clear BG */
+    border: 1px solid var(--border);
+    padding: 32px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    border-color: var(--accent);
+    transform: translateY(-5px);
+    background: rgba(0, 210, 255, 0.08);
+}

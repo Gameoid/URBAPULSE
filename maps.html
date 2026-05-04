@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrbaPulse | Better Maps</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .maps-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            height: calc(100vh - 80px);
+        }
+
+        .search-panel {
+            padding: 30px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #0b0f19;
+        }
+
+        .route-card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .route-card.hot { border-left-color: var(--danger); opacity: 0.7; }
+        .route-card.safe { border-left-color: var(--success); }
+        .route-card:hover { transform: scale(1.02); }
+
+        .legend-overlay {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            background: rgba(11, 15, 25, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.75rem;
+        }
+
+        .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
+        .color-box { width: 12px; height: 12px; margin-right: 10px; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html" class="logo" style="text-decoration: none;">URBAPULSE</a>
+        <div style="color: var(--text-muted); font-size: 0.8rem;">BETTER MAPS: WEIGHTED NAVIGATION</div>
+    </nav>
+
+    <main class="maps-layout">
+        <aside class="search-panel">
+            <h2 style="margin: 0; font-size: 1.4rem;">Route Planning</h2>
+            
+            <div class="form-group" style="margin-top: 10px;">
+                <label>Origin</label>
+                <input type="text" value="Sec-17 Metro Station" readonly>
+            </div>
+            <div class="form-group">
+                <label>Destination</label>
+                <input type="text" value="Sector 17 Market Hub" readonly>
+            </div>
+
+            <hr style="border: 0.5px solid var(--border); width: 100%;">
+
+            <div id="route-options">
+                <div class="route-card hot">
+                    <h4 style="margin: 0;">Shortest Path (Fast)</h4>
+                    <p style="font-size: 0.8rem; color: var(--danger);">Exposure: 44°C | AQI: 195</p>
+                </div>
+                
+                <div class="route-card safe" style="margin-top: 15px;">
+                    <h4 style="margin: 0;">Health Gradient (Rec.)</h4>
+                    <p style="font-size: 0.8rem; color: var(--success);">Exposure: 38°C | AQI: 110</p>
+                    <small style="color: var(--text-muted);">+2 mins walk via Shaded Corridor</small>
+                </div>
+            </div>
+        </aside>
+
+        <section style="position: relative;">
+            <div id="map"></div>
+            
+            <div class="legend-overlay">
+                <div class="legend-item"><div class="color-box" style="background: var(--danger);"></div> High Heat/AQI Zone</div>
+                <div class="legend-item"><div class="color-box" style="background: var(--success);"></div> Cooled/Shaded Path</div>
+                <div class="legend-item"><div class="color-box" style="background: var(--accent);"></div> Standard Route</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initializing map centered on Faridabad Sector 17
+        var map = L.map('map').setView([28.4089, 77.3178], 15);
+
+        // Using CartoDB Voyager tiles as per your project notes
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
+            attribution: '©OpenStreetMap ©CartoDB',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // Simulating the "Health Gradient" Path segments
+        // In your full version, these colors are updated via ESP32 sensor logic
+        var hotCoords = [
+            [28.4110, 77.3150], [28.4089, 77.3178], [28.4060, 77.3210]
+        ];
+        var safeCoords = [
+            [28.4110, 77.3150], [28.4120, 77.3185], [28.4060, 77.3210]
+        ];
+
+        L.polyline(hotCoords, {color: '#ff4b2b', weight: 5, dashArray: '10, 10'}).addTo(map)
+            .bindPopup("High Thermal Weight: 44°C Surface Temp");
+
+        L.polyline(safeCoords, {color: '#27ae60', weight: 6}).addTo(map)
+            .bindPopup("Health Gradient: Optimized via Hydronic Cooling Zone");
+
+        // Adding a marker for your physical model's sensor node
+        L.circleMarker([28.4089, 77.3178], {
+            radius: 10,
+            fillColor: "#00d2ff",
+            color: "#fff",
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(map).bindPopup("<b>ESP32 Node-17-Alpha</b><br>Stationed at Solar Bus Stand");
+    </script>
+</body>
+</html>
