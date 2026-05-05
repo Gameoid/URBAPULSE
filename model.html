@@ -48,7 +48,7 @@
             line-height: 1.6;
         }
 
-        /* Image Display Styling */
+        /* Image/3D Model Display Styling */
         .blueprint-container {
             background: var(--surface);
             padding: 20px;
@@ -58,11 +58,11 @@
             top: 40px;
         }
 
-        .blueprint-image {
+        /* Added a class specifically for the iframe to keep it neat */
+        .blueprint-model {
             width: 100%;
-            height: auto;
+            height: 500px;
             border-radius: 12px;
-            filter: contrast(1.1) brightness(1.1); /* Subtle polish for the photo */
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             display: block;
         }
@@ -115,10 +115,17 @@
                 </div>
             </aside>
 
-            <!-- IMAGE SECTION: Your Sketch -->
+            <!-- 3D MODEL SECTION: Replaced the static image -->
             <section class="blueprint-container">
-                <img src="media\photos\basic model.jpeg" alt="Project Sketch" class="blueprint-image">
-                <span class="caption">Original Schematic: Urban Grid & Sensor Distribution (Sec-17, Faridabad)</span>
+                <iframe 
+                    class="blueprint-model"
+                    src="https://www.tinkercad.com/embed/0DnmBx4vApu?editbtn=1&simlab=1" 
+                    frameborder="0" 
+                    marginwidth="0" 
+                    marginheight="0" 
+                    scrolling="no">
+                </iframe>
+                <span class="caption">Interactive 3D Digital Twin: Urban Grid & Sensor Distribution</span>
             </section>
 
         </div>
