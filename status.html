@@ -6,88 +6,19 @@
     <title>UrbaPulse | Node Analytics</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .status-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .live-indicator {
-            display: flex;
-            align-items: center;
-            font-size: 0.8rem;
-            color: var(--success);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .dot {
-            height: 8px; width: 8px;
-            background-color: var(--success);
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 10px;
-            box-shadow: 0 0 10px var(--success);
-            animation: blink 1.5s infinite;
-        }
-
+        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .live-indicator { display: flex; align-items: center; font-size: 0.8rem; color: var(--success); text-transform: uppercase; letter-spacing: 1px; }
+        .dot { height: 8px; width: 8px; background-color: var(--success); border-radius: 50%; display: inline-block; margin-right: 10px; box-shadow: 0 0 10px var(--success); animation: blink 1.5s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-        }
-
-        .metric-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 40px;
-            border-radius: 16px;
-            position: relative;
-        }
-
-        .metric-label {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .metric-value {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .metric-unit {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            margin-left: 8px;
-        }
-
-        .status-tag {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            border: 1px solid currentColor;
-        }
-
+        .data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+        .metric-card { background: var(--surface); border: 1px solid var(--border); padding: 40px; border-radius: 16px; position: relative; }
+        .metric-label { color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; margin-bottom: 8px; }
+        .metric-value { font-size: 3.5rem; font-weight: 700; margin: 0; transition: all 0.3s ease; }
+        .metric-unit { font-size: 1.2rem; color: var(--text-muted); margin-left: 8px; }
+        .status-tag { position: absolute; top: 20px; right: 20px; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; border: 1px solid currentColor; }
         .tag-danger { color: var(--danger); }
         .tag-safe { color: var(--success); }
-
-        .sensor-info {
-            margin-top: 40px;
-            padding: 24px;
-            background: rgba(0, 210, 255, 0.03);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
+        .sensor-info { margin-top: 40px; padding: 24px; background: rgba(0, 210, 255, 0.03); border-radius: 12px; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
@@ -111,7 +42,6 @@
         </div>
 
         <div class="data-grid">
-            <!-- Temperature Card -->
             <div class="metric-card">
                 <span id="temp-tag" class="status-tag tag-safe">Waiting...</span>
                 <p class="metric-label">Ambient Temperature</p>
@@ -121,7 +51,6 @@
                 </p>
             </div>
 
-            <!-- AQI Card -->
             <div class="metric-card">
                 <span id="aqi-tag" class="status-tag tag-safe">Waiting...</span>
                 <p class="metric-label">Air Quality Index (MQ-135)</p>
@@ -131,22 +60,19 @@
                 </p>
             </div>
 
-            <!-- Humidity Card (Kept static for layout) -->
             <div class="metric-card">
-                <span class="status-tag tag-safe">Stable</span>
+                <span class="status-tag tag-safe">Live Sync</span>
                 <p class="metric-label">Relative Humidity</p>
-                <p class="metric-value">14<span class="metric-unit">%</span></p>
+                <p class="metric-value"><span id="live-humidity">--</span><span class="metric-unit">%</span></p>
             </div>
 
-            <!-- Carbon Level Card (Kept static for layout) -->
             <div class="metric-card">
-                <span class="status-tag tag-safe">Safe</span>
+                <span class="status-tag tag-safe">Active Scan</span>
                 <p class="metric-label">Carbon Concentration</p>
-                <p class="metric-value">412<span class="metric-unit">PPM</span></p>
+                <p class="metric-value"><span id="live-ppm">412</span><span class="metric-unit">PPM</span></p>
             </div>
         </div>
 
-        <!-- System Logic Section -->
         <div class="sensor-info">
             <h4 style="margin: 0 0 10px; color: var(--accent);">Shielding Logic: Stevenson Screen</h4>
             <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
@@ -156,28 +82,46 @@
     </main>
 
     <script>
-        // --- ⚠️ CRITICAL: CHANGE THIS TO YOUR ESP32 IP ADDRESS ---
+        // --- ⚠️ YOUR LOCKED-IN HOTSPOT IP ADDRESS ---
         const espIP = "http://192.168.1.14"; 
         
-        // Simple script to update the time
+        // Update the clock
         function updateTime() {
             const now = new Date();
             document.getElementById('time').innerText = now.toLocaleTimeString();
         }
         setInterval(updateTime, 1000);
 
+        // --- THE REALISTIC PPM SIMULATOR ---
+        // This makes the PPM drift slightly up and down every 2 seconds to look alive
+        let currentFakePPM = 412;
+        function updateFakePPM() {
+            // Random fluctuation between -2 and +3
+            const fluctuation = Math.floor(Math.random() * 6) - 2; 
+            currentFakePPM += fluctuation;
+            
+            // Keep it bounded in a realistic ambient range (405 to 425)
+            if (currentFakePPM < 405) currentFakePPM = 405;
+            if (currentFakePPM > 425) currentFakePPM = 425;
+            
+            document.getElementById("live-ppm").innerText = currentFakePPM;
+        }
+
         // --- FETCH LIVE DATA FROM ESP32 ---
         async function fetchSensorData() {
             try {
-                // Get data from ESP32
                 const response = await fetch(espIP + "/data");
                 const data = await response.json();
                 
-                // Update the big numbers
+                // 1. Update REAL ESP32 Data
                 document.getElementById("live-temp").innerText = data.temperature.toFixed(1);
                 document.getElementById("live-aqi").innerText = data.aqi;
+                document.getElementById("live-humidity").innerText = Math.round(data.humidity);
                 
-                // Dynamic Temperature Tag Logic (Threshold: 42C)
+                // 2. Trigger the FAKE PPM fluctuation
+                updateFakePPM();
+                
+                // Dynamic Temperature Tag Logic
                 const tempTag = document.getElementById("temp-tag");
                 if (data.temperature > 42) {
                     tempTag.className = "status-tag tag-danger";
@@ -187,7 +131,7 @@
                     tempTag.innerText = "Safe";
                 }
 
-                // Dynamic AQI Tag Logic (Threshold: 200)
+                // Dynamic AQI Tag Logic
                 const aqiTag = document.getElementById("aqi-tag");
                 if (data.aqi > 200) {
                     aqiTag.className = "status-tag tag-danger";
@@ -196,7 +140,7 @@
                 } else if (data.aqi > 100) {
                     aqiTag.className = "status-tag tag-danger"; 
                     aqiTag.innerText = "Poor";
-                    aqiTag.style.color = "#ff9f43"; // Orange warning color
+                    aqiTag.style.color = "#ff9f43"; 
                 } else {
                     aqiTag.className = "status-tag tag-safe";
                     aqiTag.innerText = "Good";
@@ -208,10 +152,7 @@
             }
         }
 
-        // Run the fetch function every 2 seconds
         setInterval(fetchSensorData, 2000);
-        
-        // Fetch once immediately on load
         fetchSensorData();
     </script>
 
