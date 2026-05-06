@@ -113,9 +113,9 @@
         <div class="data-grid">
             <!-- Temperature Card -->
             <div class="metric-card">
-                <span class="status-tag tag-danger">Critical</span>
+                <span id="temp-tag" class="status-tag tag-safe">Waiting...</span>
                 <p class="metric-label">Ambient Temperature</p>
-                <p class="metric-value">43<span class="metric-unit">°C</span></p>
+                <p class="metric-value"><span id="live-temp">--</span><span class="metric-unit">°C</span></p>
                 <p style="font-size: 0.8rem; margin-top: 15px; color: var(--text-muted);">
                     Triggering Ultrasonic Misters...
                 </p>
@@ -123,22 +123,22 @@
 
             <!-- AQI Card -->
             <div class="metric-card">
-                <span class="status-tag tag-danger" style="color: #ff9f43;">Poor</span>
+                <span id="aqi-tag" class="status-tag tag-safe">Waiting...</span>
                 <p class="metric-label">Air Quality Index (MQ-135)</p>
-                <p class="metric-value">168<span class="metric-unit">AQI</span></p>
+                <p class="metric-value"><span id="live-aqi">--</span><span class="metric-unit">AQI</span></p>
                 <p style="font-size: 0.8rem; margin-top: 15px; color: var(--text-muted);">
                     Primary Pollutants: CO₂ & NH₃
                 </p>
             </div>
 
-            <!-- Humidity Card -->
+            <!-- Humidity Card (Kept static for layout) -->
             <div class="metric-card">
                 <span class="status-tag tag-safe">Stable</span>
                 <p class="metric-label">Relative Humidity</p>
                 <p class="metric-value">14<span class="metric-unit">%</span></p>
             </div>
 
-            <!-- Carbon Level Card -->
+            <!-- Carbon Level Card (Kept static for layout) -->
             <div class="metric-card">
                 <span class="status-tag tag-safe">Safe</span>
                 <p class="metric-label">Carbon Concentration</p>
@@ -150,18 +150,69 @@
         <div class="sensor-info">
             <h4 style="margin: 0 0 10px; color: var(--accent);">Shielding Logic: Stevenson Screen</h4>
             <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
-                Sensors are positioned 1-inch below the solar canopy. This creates a natural aspiration zone, protecting the DHT22 from direct solar radiation (heat soak) while allowing ambient air flow for ±0.5°C accuracy.
+                Sensors are positioned 1-inch below the solar canopy. This creates a natural aspiration zone, protecting the DHT11 from direct solar radiation (heat soak) while allowing ambient air flow for maximum accuracy.
             </p>
         </div>
     </main>
 
     <script>
+        // --- ⚠️ CRITICAL: CHANGE THIS TO YOUR ESP32 IP ADDRESS ---
+        const espIP = "http://192.168.xxx.xxx"; 
+        
         // Simple script to update the time
         function updateTime() {
             const now = new Date();
             document.getElementById('time').innerText = now.toLocaleTimeString();
         }
         setInterval(updateTime, 1000);
+
+        // --- FETCH LIVE DATA FROM ESP32 ---
+        async function fetchSensorData() {
+            try {
+                // Get data from ESP32
+                const response = await fetch(espIP + "/data");
+                const data = await response.json();
+                
+                // Update the big numbers
+                document.getElementById("live-temp").innerText = data.temperature.toFixed(1);
+                document.getElementById("live-aqi").innerText = data.aqi;
+                
+                // Dynamic Temperature Tag Logic (Threshold: 42C)
+                const tempTag = document.getElementById("temp-tag");
+                if (data.temperature > 42) {
+                    tempTag.className = "status-tag tag-danger";
+                    tempTag.innerText = "Critical";
+                } else {
+                    tempTag.className = "status-tag tag-safe";
+                    tempTag.innerText = "Safe";
+                }
+
+                // Dynamic AQI Tag Logic (Threshold: 200)
+                const aqiTag = document.getElementById("aqi-tag");
+                if (data.aqi > 200) {
+                    aqiTag.className = "status-tag tag-danger";
+                    aqiTag.innerText = "Danger";
+                    aqiTag.style.color = "var(--danger)";
+                } else if (data.aqi > 100) {
+                    aqiTag.className = "status-tag tag-danger"; 
+                    aqiTag.innerText = "Poor";
+                    aqiTag.style.color = "#ff9f43"; // Orange warning color
+                } else {
+                    aqiTag.className = "status-tag tag-safe";
+                    aqiTag.innerText = "Good";
+                    aqiTag.style.color = "var(--success)";
+                }
+                
+            } catch (error) {
+                console.log("Waiting for ESP32 connection...");
+            }
+        }
+
+        // Run the fetch function every 2 seconds
+        setInterval(fetchSensorData, 2000);
+        
+        // Fetch once immediately on load
+        fetchSensorData();
     </script>
 
 </body>
