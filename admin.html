@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbaPulse Admin Portal</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
+    #admin-login-section { text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 50px auto; }
+    #admin-portal-section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; display: none; }
+    button { cursor: pointer; border: none; border-radius: 5px; }
+  </style>
+</head>
+<body>
+
+  <!-- THE LOGIN SCREEN -->
+  <div id="admin-login-section">
+    <h2>🔒 Restricted City Admin Access</h2>
+    <p>Please enter your credentials to view civic reports.</p>
+    <input type="password" id="adminPassword" placeholder="Enter Password" style="padding: 10px; font-size: 16px; width: 80%; margin-bottom: 15px;"><br>
+    <button onclick="checkPassword()" style="padding: 10px 20px; background-color: black; color: white; font-size: 16px;">Login</button>
+    <p id="loginError" style="color: red; display: none; font-weight: bold; margin-top: 15px;">❌ Access Denied.</p>
+  </div>
+
+  <!-- THE DASHBOARD -->
+  <div id="admin-portal-section">
+    <h2>UrbaPulse Admin Dashboard 🟢</h2>
+    <button onclick="loadReports()" style="margin-bottom: 15px; padding: 10px; background-color: #007bff; color: white;">Refresh Reports</button>
+    <button onclick="logoutAdmin()" style="margin-bottom: 15px; padding: 10px; background-color: #6c757d; color: white;">Lock Dashboard</button>
+    
+    <div id="adminReportList"></div> 
+  </div>
+
+  <script>
+    // --- PASSWORD LOGIC ---
+    function checkPassword() {
+      const pass = document.getElementById('adminPassword').value;
+      if (pass === "1983") {
+        document.getElementById('admin-login-section').style.display = 'none';
+        document.getElementById('admin-portal-section').style.display = 'block';
+        document.getElementById('loginError').style.display = 'none';
+        document.getElementById('adminPassword').value = ''; 
+        loadReports(); 
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    }
+
+    function logoutAdmin() {
+      document.getElementById('admin-portal-section').style.display = 'none';
+      document.getElementById('admin-login-section').style.display = 'block';
+    }
+
+    // --- REPORT LOGIC (Currently Local) ---
+    function loadReports() {
+      const reportList = document.getElementById('adminReportList');
+      let database = JSON.parse(localStorage.getItem('urbaPulseReports')) || [];
+
+      if (database.length === 0) {
+        reportList.innerHTML = "<p style='color: green; font-weight: bold; padding: 20px; background: #e6ffe6; border-radius: 5px;'>✅ No active reports. The city is running perfectly.</p>";
+        return;
+      }
+
+      let html = "";
+      database.forEach(report => {
+        html += `
+          <div style="border-left: 5px solid red; padding: 15px; margin-bottom: 15px; background-color: #fff5f5; border-radius: 5px;">
+            <h3 style="margin: 0 0 10px 0; color: #cc0000;">🚨 ${report.title}</h3>
+            <p style="margin: 0 0 10px 0;"><strong>Details:</strong> ${report.desc}</p>
+            <p style="font-size: 12px; color: gray; margin: 0 0 10px 0;">Reported on: ${report.date}</p>
+            <button onclick="resolveReport(${report.id})" style="background-color: #28a745; color: white; padding: 8px 15px;">Mark as Resolved</button>
+          </div>
+        `;
+      });
+      reportList.innerHTML = html;
+    }
+
+    function resolveReport(idToRemove) {
+      let database = JSON.parse(localStorage.getItem('urbaPulseReports')) || [];
+      database = database.filter(report => report.id !== idToRemove);
+      localStorage.setItem('urbaPulseReports', JSON.stringify(database));
+      loadReports();
+    }
+  </script>
+
+</body>
+</html>
