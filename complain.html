@@ -124,27 +124,27 @@
                 <h2 style="margin-top: 0;">File a Thermal Report</h2>
                 <p style="color: var(--text-muted); margin-bottom: 30px;">Help the Municipal Corporation of Faridabad identify unmapped heat zones.</p>
 
-                <form class="report-form" onsubmit="event.preventDefault(); alert('Report successfully transmitted to MCF Hub.');">
+                <form id="civicForm" class="report-form" onsubmit="submitReport(event)">
                     <div class="form-group">
                         <label>Incident Location</label>
-                        <input type="text" placeholder="e.g. Sector 17 Market, Near Bus Stand" required>
+                        <input type="text" id="reportLocation" placeholder="e.g. Sector 17 Market, Near Bus Stand" required>
                     </div>
 
                     <div class="form-group">
                         <label>Issue Type</label>
-                        <select required>
+                        <select id="reportType" required>
                             <option value="" disabled selected>Select Category</option>
-                            <option>High Surface Temperature</option>
-                            <option>Poor Air Quality / Visible Smog</option>
-                            <option>Damaged Hydronic Pipe</option>
-                            <option>Broken Misting System</option>
-                            <option>Inaccurate Sensor Reading</option>
+                            <option value="High Surface Temperature">High Surface Temperature</option>
+                            <option value="Poor Air Quality">Poor Air Quality / Visible Smog</option>
+                            <option value="Damaged Hydronic Pipe">Damaged Hydronic Pipe</option>
+                            <option value="Broken Misting System">Broken Misting System</option>
+                            <option value="Inaccurate Sensor Reading">Inaccurate Sensor Reading</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label>Additional Details</label>
-                        <textarea rows="5" placeholder="Describe the severity and time of day..."></textarea>
+                        <textarea id="reportDesc" rows="5" placeholder="Describe the severity and time of day..." required></textarea>
                     </div>
 
                     <button type="submit" class="submit-btn">Transmit Report</button>
@@ -182,5 +182,54 @@
         </div>
     </main>
 
+    <!-- FIREBASE DATABASE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // Your exact Firebase keys
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmUH2z_Dy8Dpclydl3LAKtlyTBdLCSkmc",
+            authDomain: "urbapulse-dbms.firebaseapp.com",
+            databaseURL: "https://urbapulse-dbms-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "urbapulse-dbms",
+            storageBucket: "urbapulse-dbms.firebasestorage.app",
+            messagingSenderId: "1007127344295",
+            appId: "1:1007127344295:web:b6cb9727a905e8dc205782"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // This runs when the user clicks the Transmit button
+        window.submitReport = function(event) {
+            event.preventDefault(); 
+
+            // Grab what the user typed in the boxes
+            const location = document.getElementById('reportLocation').value;
+            const type = document.getElementById('reportType').value;
+            const desc = document.getElementById('reportDesc').value;
+            const date = new Date().toLocaleString();
+
+            // Combine the type and location to make a catchy title for the admin dashboard
+            const finalTitle = type + " - " + location;
+
+            // Target the 'reports' folder in the cloud
+            const reportsListRef = ref(db, 'reports');
+            const newReportRef = push(reportsListRef); // creates a unique ID for this report
+            
+            // Blast it to the cloud!
+            set(newReportRef, {
+                title: finalTitle,
+                desc: desc,
+                date: date
+            }).then(() => {
+                alert("Report successfully transmitted to MCF Hub!");
+                document.getElementById('civicForm').reset(); // Clear the form
+            }).catch((error) => {
+                alert("Error sending report: " + error);
+            });
+        }
+    </script>
 </body>
 </html>
