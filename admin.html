@@ -1,87 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UrbaPulse Admin Portal</title>
-  <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
-    #admin-login-section { text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 50px auto; }
-    #admin-portal-section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; display: none; }
-    button { cursor: pointer; border: none; border-radius: 5px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrbaPulse | Admin Vault</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Standalone PIN Screen Styling */
+        #pin-screen {
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
+            height: 80vh;
+        }
+        .pin-box {
+            width: 60px; height: 70px; 
+            font-size: 35px; text-align: center; 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 2px solid var(--border, #333); 
+            color: white; 
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+            margin: 0 5px;
+        }
+        .pin-box:focus {
+            border-color: var(--accent, #00d2ff);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+        }
+        
+        /* Dashboard Styling */
+        #admin-dashboard-view {
+            display: none; /* Hidden until unlocked */
+            padding: 40px 0; 
+            color: white;
+        }
+        .admin-report-card {
+            background: rgba(20, 20, 30, 0.7); 
+            border: 1px solid rgba(255,255,255,0.1);
+            border-left: 4px solid #ff4d4d; 
+            padding: 25px; 
+            border-radius: 12px; 
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
+    <nav>
+        <a href="index.html" class="logo" style="text-decoration: none;">URBAPULSE</a>
+        <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; letter-spacing: 1px;">SEC-17 FARIDABAD HUB</div>
+    </nav>
 
-  <!-- THE LOGIN SCREEN -->
-  <div id="admin-login-section">
-    <h2>🔒 Restricted City Admin Access</h2>
-    <p>Please enter your credentials to view civic reports.</p>
-    <input type="password" id="adminPassword" placeholder="Enter Password" style="padding: 10px; font-size: 16px; width: 80%; margin-bottom: 15px;"><br>
-    <button onclick="checkPassword()" style="padding: 10px 20px; background-color: black; color: white; font-size: 16px;">Login</button>
-    <p id="loginError" style="color: red; display: none; font-weight: bold; margin-top: 15px;">❌ Access Denied.</p>
-  </div>
+    <main class="container">
+        
+        <!-- 1. THE PIN SCREEN (Shows by default) -->
+        <div id="pin-screen">
+            <h2 style="color: var(--accent, #00d2ff); margin-bottom: 10px; letter-spacing: 2px; font-size: 2.5rem;">RESTRICTED ACCESS</h2>
+            <p style="color: var(--text-muted, gray); margin-bottom: 40px;">Enter 4-Digit Municipal PIN</p>
+            
+            <div style="display: flex;">
+                <input type="password" class="pin-box" maxlength="1" onkeyup="moveToNext(this, event, 1)" id="pin1" autofocus>
+                <input type="password" class="pin-box" maxlength="1" onkeyup="moveToNext(this, event, 2)" id="pin2">
+                <input type="password" class="pin-box" maxlength="1" onkeyup="moveToNext(this, event, 3)" id="pin3">
+                <input type="password" class="pin-box" maxlength="1" onkeyup="moveToNext(this, event, 4)" id="pin4">
+            </div>
+            
+            <p id="pin-error" style="color: #ff4d4d; margin-top: 20px; opacity: 0; transition: opacity 0.3s; font-weight: bold;">❌ INVALID PIN</p>
+            <a href="index.html" style="margin-top: 30px; color: var(--text-muted, gray); text-decoration: underline; font-size: 0.9rem;">Return to Main Site</a>
+        </div>
 
-  <!-- THE DASHBOARD -->
-  <div id="admin-portal-section">
-    <h2>UrbaPulse Admin Dashboard 🟢</h2>
-    <button onclick="loadReports()" style="margin-bottom: 15px; padding: 10px; background-color: #007bff; color: white;">Refresh Reports</button>
-    <button onclick="logoutAdmin()" style="margin-bottom: 15px; padding: 10px; background-color: #6c757d; color: white;">Lock Dashboard</button>
-    
-    <div id="adminReportList"></div> 
-  </div>
+        <!-- 2. THE ADMIN DASHBOARD (Hidden initially) -->
+        <div id="admin-dashboard-view">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; margin-bottom: 30px;">
+                <h1 style="font-size: 3rem; margin: 0;">System Logs <span style="color: var(--accent, #00d2ff);">●</span></h1>
+                <div>
+                    <button onclick="window.location.href='index.html'" style="background: #ff4d4d; border: none; color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem;">🔒 Lock System</button>
+                </div>
+            </div>
+            
+            <div id="adminReportGrid">
+                <!-- Reports will load here automatically -->
+            </div>
+        </div>
 
-  <script>
-    // --- PASSWORD LOGIC ---
-    function checkPassword() {
-      const pass = document.getElementById('adminPassword').value;
-      if (pass === "1983") {
-        document.getElementById('admin-login-section').style.display = 'none';
-        document.getElementById('admin-portal-section').style.display = 'block';
-        document.getElementById('loginError').style.display = 'none';
-        document.getElementById('adminPassword').value = ''; 
-        loadReports(); 
-      } else {
-        document.getElementById('loginError').style.display = 'block';
-      }
-    }
+    </main>
 
-    function logoutAdmin() {
-      document.getElementById('admin-portal-section').style.display = 'none';
-      document.getElementById('admin-login-section').style.display = 'block';
-    }
+    <!-- 3. THE FIREBASE & UI LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    // --- REPORT LOGIC (Currently Local) ---
-    function loadReports() {
-      const reportList = document.getElementById('adminReportList');
-      let database = JSON.parse(localStorage.getItem('urbaPulseReports')) || [];
+        // Your exact Firebase keys
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmUH2z_Dy8Dpclydl3LAKtlyTBdLCSkmc",
+            authDomain: "urbapulse-dbms.firebaseapp.com",
+            databaseURL: "https://urbapulse-dbms-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "urbapulse-dbms",
+            storageBucket: "urbapulse-dbms.firebasestorage.app",
+            messagingSenderId: "1007127344295",
+            appId: "1:1007127344295:web:b6cb9727a905e8dc205782"
+        };
 
-      if (database.length === 0) {
-        reportList.innerHTML = "<p style='color: green; font-weight: bold; padding: 20px; background: #e6ffe6; border-radius: 5px;'>✅ No active reports. The city is running perfectly.</p>";
-        return;
-      }
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const reportsRef = ref(db, 'reports');
 
-      let html = "";
-      database.forEach(report => {
-        html += `
-          <div style="border-left: 5px solid red; padding: 15px; margin-bottom: 15px; background-color: #fff5f5; border-radius: 5px;">
-            <h3 style="margin: 0 0 10px 0; color: #cc0000;">🚨 ${report.title}</h3>
-            <p style="margin: 0 0 10px 0;"><strong>Details:</strong> ${report.desc}</p>
-            <p style="font-size: 12px; color: gray; margin: 0 0 10px 0;">Reported on: ${report.date}</p>
-            <button onclick="resolveReport(${report.id})" style="background-color: #28a745; color: white; padding: 8px 15px;">Mark as Resolved</button>
-          </div>
-        `;
-      });
-      reportList.innerHTML = html;
-    }
+        // --- PIN LOGIC ---
+        window.moveToNext = function(currentInput, event, index) {
+            if (event.key === 'Backspace' && index > 1) {
+                document.getElementById('pin' + (index - 1)).focus();
+                return;
+            }
+            if (currentInput.value.length === 1 && index < 4) {
+                document.getElementById('pin' + (index + 1)).focus();
+            }
+            if (index === 4 && currentInput.value.length === 1) {
+                verifyPin();
+            }
+        }
 
-    function resolveReport(idToRemove) {
-      let database = JSON.parse(localStorage.getItem('urbaPulseReports')) || [];
-      database = database.filter(report => report.id !== idToRemove);
-      localStorage.setItem('urbaPulseReports', JSON.stringify(database));
-      loadReports();
-    }
-  </script>
+        function verifyPin() {
+            const enteredPin = document.getElementById('pin1').value + 
+                               document.getElementById('pin2').value + 
+                               document.getElementById('pin3').value + 
+                               document.getElementById('pin4').value;
 
+            if (enteredPin === "1983") {
+                // SUCCESS! Hide PIN, Show Dashboard
+                document.getElementById('pin-screen').style.display = 'none';
+                document.getElementById('admin-dashboard-view').style.display = 'block';
+            } else {
+                // FAIL!
+                document.getElementById('pin-error').style.opacity = '1';
+                for(let i=1; i<=4; i++) { document.getElementById('pin' + i).value = ''; }
+                document.getElementById('pin1').focus();
+            }
+        }
+
+        // --- FIREBASE LIVE FETCHING LOGIC ---
+        onValue(reportsRef, (snapshot) => {
+            const reportGrid = document.getElementById('adminReportGrid');
+            const data = snapshot.val();
+
+            if (!data) {
+                reportGrid.innerHTML = `
+                    <div style="text-align: center; padding: 60px; background: rgba(0,255,0,0.05); border: 1px dashed rgba(0,255,0,0.3); border-radius: 12px;">
+                        <h3 style="color: #00e676; margin: 0; font-size: 1.5rem;">✅ City Operations Normal</h3>
+                        <p style="color: gray; margin-top: 10px;">No anomalous reports active in the network.</p>
+                    </div>`;
+                return;
+            }
+
+            let html = "";
+            // Loop through Firebase data and build the cards
+            for (let id in data) {
+                let report = data[id];
+                html += `
+                    <div class="admin-report-card">
+                        <h3 style="margin: 0 0 10px 0; color: #ff4d4d; font-size: 1.5rem;">⚠️ ${report.title}</h3>
+                        <p style="color: #ccc; margin: 0 0 20px 0; font-size: 1.1rem; line-height: 1.5;">${report.desc}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                            <span style="font-size: 0.9rem; color: #888;">Logged: ${report.date}</span>
+                            <button onclick="resolveReport('${id}')" style="background: transparent; border: 1px solid var(--accent, #00d2ff); color: var(--accent, #00d2ff); font-weight: bold; padding: 8px 15px; border-radius: 6px; cursor: pointer; transition: 0.3s;">Resolve Ticket ✓</button>
+                        </div>
+                    </div>
+                `;
+            }
+            reportGrid.innerHTML = html;
+        });
+
+        // --- DELETE REPORT LOGIC ---
+        window.resolveReport = function(idToRemove) {
+            const exactReportRef = ref(db, 'reports/' + idToRemove);
+            remove(exactReportRef)
+                .then(() => console.log("Report Resolved!"))
+                .catch((error) => alert("Error removing report: " + error));
+        }
+    </script>
 </body>
 </html>
