@@ -6,19 +6,19 @@
     <title>UrbaPulse | Admin Vault</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Standalone PIN Screen Styling */
+        /* PIN Screen Styling */
         #pin-screen {
             display: flex; 
             flex-direction: column; 
             justify-content: center; 
             align-items: center;
-            height: 80vh;
+            min-height: 60vh;
         }
         .pin-box {
             width: 60px; height: 70px; 
             font-size: 35px; text-align: center; 
             background: rgba(255, 255, 255, 0.05); 
-            border: 2px solid var(--border, #333); 
+            border: 2px solid #333; 
             color: white; 
             border-radius: 8px;
             outline: none;
@@ -26,13 +26,13 @@
             margin: 0 5px;
         }
         .pin-box:focus {
-            border-color: var(--accent, #00d2ff);
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+            border-color: #00e6e6;
+            box-shadow: 0 0 15px rgba(0, 230, 230, 0.3);
         }
         
         /* Dashboard Styling */
         #admin-dashboard-view {
-            display: none; /* Hidden until unlocked */
+            display: none; /* Hidden until PIN is entered */
             padding: 40px 0; 
             color: white;
         }
@@ -50,15 +50,15 @@
 <body>
     <nav>
         <a href="index.html" class="logo" style="text-decoration: none;">URBAPULSE</a>
-        <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; letter-spacing: 1px;">SEC-17 FARIDABAD HUB</div>
+        <div style="color: var(--text-muted, gray); font-size: 0.8rem; font-weight: 600; letter-spacing: 1px;">SEC-17 FARIDABAD HUB</div>
     </nav>
 
     <main class="container">
         
-        <!-- 1. THE PIN SCREEN (Shows by default) -->
+        <!-- 1. THE PIN SCREEN -->
         <div id="pin-screen">
-            <h2 style="color: var(--accent, #00d2ff); margin-bottom: 10px; letter-spacing: 2px; font-size: 2.5rem;">RESTRICTED ACCESS</h2>
-            <p style="color: var(--text-muted, gray); margin-bottom: 40px;">Enter 4-Digit Municipal PIN</p>
+            <h2 style="color: #00e6e6; margin-bottom: 10px; letter-spacing: 2px; font-size: 2.5rem;">RESTRICTED ACCESS</h2>
+            <p style="color: gray; margin-bottom: 40px;">Enter 4-Digit Municipal PIN</p>
             
             <div style="display: flex;">
                 <input type="password" class="pin-box" maxlength="1" onkeyup="moveToNext(this, event, 1)" id="pin1" autofocus>
@@ -68,21 +68,20 @@
             </div>
             
             <p id="pin-error" style="color: #ff4d4d; margin-top: 20px; opacity: 0; transition: opacity 0.3s; font-weight: bold;">❌ INVALID PIN</p>
-            <a href="index.html" style="margin-top: 30px; color: var(--text-muted, gray); text-decoration: underline; font-size: 0.9rem;">Return to Main Site</a>
+            <a href="index.html" style="margin-top: 30px; color: gray; text-decoration: underline; font-size: 0.9rem;">Return to Main Site</a>
         </div>
 
-        <!-- 2. THE ADMIN DASHBOARD (Hidden initially) -->
+        <!-- 2. THE ADMIN DASHBOARD -->
         <div id="admin-dashboard-view">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; margin-bottom: 30px;">
-                <h1 style="font-size: 3rem; margin: 0;">System Logs <span style="color: var(--accent, #00d2ff);">●</span></h1>
+                <h1 style="font-size: 3rem; margin: 0;">System Logs <span style="color: #00e6e6;">●</span></h1>
                 <div>
+                    <!-- Kicks them back to index.html when they lock the system -->
                     <button onclick="window.location.href='index.html'" style="background: #ff4d4d; border: none; color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem;">🔒 Lock System</button>
                 </div>
             </div>
             
-            <div id="adminReportGrid">
-                <!-- Reports will load here automatically -->
-            </div>
+            <div id="adminReportGrid"></div>
         </div>
 
     </main>
@@ -128,11 +127,9 @@
                                document.getElementById('pin4').value;
 
             if (enteredPin === "1983") {
-                // SUCCESS! Hide PIN, Show Dashboard
                 document.getElementById('pin-screen').style.display = 'none';
                 document.getElementById('admin-dashboard-view').style.display = 'block';
             } else {
-                // FAIL!
                 document.getElementById('pin-error').style.opacity = '1';
                 for(let i=1; i<=4; i++) { document.getElementById('pin' + i).value = ''; }
                 document.getElementById('pin1').focus();
@@ -154,7 +151,6 @@
             }
 
             let html = "";
-            // Loop through Firebase data and build the cards
             for (let id in data) {
                 let report = data[id];
                 html += `
@@ -163,7 +159,7 @@
                         <p style="color: #ccc; margin: 0 0 20px 0; font-size: 1.1rem; line-height: 1.5;">${report.desc}</p>
                         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
                             <span style="font-size: 0.9rem; color: #888;">Logged: ${report.date}</span>
-                            <button onclick="resolveReport('${id}')" style="background: transparent; border: 1px solid var(--accent, #00d2ff); color: var(--accent, #00d2ff); font-weight: bold; padding: 8px 15px; border-radius: 6px; cursor: pointer; transition: 0.3s;">Resolve Ticket ✓</button>
+                            <button onclick="resolveReport('${id}')" style="background: transparent; border: 1px solid #00e6e6; color: #00e6e6; font-weight: bold; padding: 8px 15px; border-radius: 6px; cursor: pointer; transition: 0.3s;">Resolve Ticket ✓</button>
                         </div>
                     </div>
                 `;
