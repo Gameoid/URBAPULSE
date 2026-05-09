@@ -5,7 +5,6 @@
     <title>UrbaPulse | Control Center</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Existing Hero & Grid Styles */
         .hero { 
             padding: 120px 0 40px; 
             text-align: center; 
@@ -37,58 +36,15 @@
         @media (max-width: 992px) { 
             .menu-grid { grid-template-columns: repeat(2, 1fr); } 
         }
-
-        /* --- NEW: ADMIN PIN & DASHBOARD STYLES --- */
-        #pin-overlay {
-            display: none; 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100vw; height: 100vh; 
-            background-color: rgba(5, 5, 10, 0.95); /* Deep dark overlay */
-            z-index: 9999; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center;
-        }
-        .pin-box {
-            width: 50px; height: 60px; 
-            font-size: 30px; text-align: center; 
-            background: rgba(255, 255, 255, 0.05); 
-            border: 2px solid #333; 
-            color: white; 
-            border-radius: 8px;
-            outline: none;
-            transition: 0.3s;
-        }
-        .pin-box:focus {
-            border-color: #00e6e6;
-            box-shadow: 0 0 10px rgba(0, 230, 230, 0.3);
-        }
-        #admin-dashboard-view {
-            display: none; /* Hidden until unlocked */
-            padding: 40px; 
-            max-width: 1100px; 
-            margin: 0 auto; 
-            color: white;
-        }
-        .admin-report-card {
-            background: rgba(20, 20, 30, 0.7); /* Matches your glassmorphism cards */
-            border: 1px solid rgba(255,255,255,0.1);
-            border-left: 4px solid #ff4d4d; 
-            padding: 20px; 
-            border-radius: 12px; 
-            backdrop-filter: blur(10px);
-        }
     </style>
 </head>
 <body>
     <nav>
-        <a href="index.html" class="logo">URBAPULSE</a>
+        <a href="index.html" class="logo" style="text-decoration: none;">URBAPULSE</a>
         <div style="color: var(--text-muted, #a0a0b0); font-size: 0.8rem; font-weight: 600; letter-spacing: 1px;">SEC-17 FARIDABAD HUB</div>
     </nav>
 
-    <!-- WRAPPER FOR MAIN CONTENT -->
-    <main class="container" id="main-view">
+    <main class="container">
         <section class="hero">
             <h1>City Resilience Engine</h1>
             <p>Advancing urban thermal management through high-albedo infrastructure and real-time IoT sensory networks.</p>
@@ -121,163 +77,13 @@
                 <p>Technical specifications of the Stevenson Screen and Project Architects info.</p>
             </a>
 
-            <!-- ADMIN CARD: Now has cursor-pointer and onclick event -->
-            <div class="card" style="opacity: 0.6; border-style: dashed; cursor: pointer;" onclick="openPinScreen()">
+            <!-- ADMIN CARD: Now a simple link to the new admin page -->
+            <a href="admin.html" class="card" style="opacity: 0.6; border-style: dashed;">
                 <span class="card-icon">🔒</span>
                 <h3>Admin Portal</h3>
                 <p>Restricted access for Municipal Corporation of Faridabad authorities.</p>
-            </div>
+            </a>
         </div>
     </main>
-
-    <!-- THE FULL-SCREEN BLACK PIN OVERLAY -->
-    <div id="pin-overlay">
-        <h2 style="color: #00e6e6; margin-bottom: 20px; letter-spacing: 2px;">RESTRICTED ACCESS</h2>
-        <p style="color: gray; margin-bottom: 30px;">Enter 4-Digit Municipal PIN</p>
-        
-        <div style="display: flex; gap: 15px;">
-            <input type="password" class="pin-box" maxlength="1" onkeyup="moveToNext(this, event, 1)" id="pin1">
-            <input type="password" class="pin-box" maxlength="1" onkeyup="moveToNext(this, event, 2)" id="pin2">
-            <input type="password" class="pin-box" maxlength="1" onkeyup="moveToNext(this, event, 3)" id="pin3">
-            <input type="password" class="pin-box" maxlength="1" onkeyup="moveToNext(this, event, 4)" id="pin4">
-        </div>
-        
-        <p id="pin-error" style="color: #ff4d4d; margin-top: 20px; opacity: 0; transition: opacity 0.3s; font-weight: bold;">❌ INVALID PIN</p>
-        <button onclick="closePinScreen()" style="margin-top: 30px; background: transparent; border: none; color: gray; cursor: pointer; text-decoration: underline; font-size: 16px;">Cancel</button>
-    </div>
-
-    <!-- THE SECURE ADMIN DASHBOARD -->
-    <div id="admin-dashboard-view">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; margin-bottom: 30px; margin-top: 80px;">
-            <h2 style="font-size: 2.5rem; margin: 0;">System Logs <span style="color: #00e6e6;">●</span></h2>
-            <div>
-                <button onclick="loadAdminReports()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-right: 10px;">Refresh Data</button>
-                <button onclick="lockSystem()" style="background: #ff4d4d; border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">🔒 Lock System</button>
-            </div>
-        </div>
-        
-        <div id="adminReportGrid" style="display: grid; grid-template-columns: 1fr; gap: 20px;"></div>
-    </div>
-
-    <!-- THE JAVASCRIPT LOGIC -->
-<!-- THE JAVASCRIPT LOGIC (FIREBASE CLOUD DATABASE) -->
-<script type="module">
-    // 1. Import Firebase Database Tools
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-
-    // 2. Your specific Firebase Project Keys (from your screenshot)
-    const firebaseConfig = {
-        apiKey: "AIzaSyAmUH2z_Dy8Dpclydl3LAKtlyTBdLCSkmc",
-        authDomain: "urbapulse-dbms.firebaseapp.com",
-        databaseURL: "https://urbapulse-dbms-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "urbapulse-dbms",
-        storageBucket: "urbapulse-dbms.firebasestorage.app",
-        messagingSenderId: "1007127344295",
-        appId: "1:1007127344295:web:b6cb9727a905e8dc205782"
-    };
-
-    // 3. Start the Cloud Database connection
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const reportsRef = ref(db, 'reports');
-
-    // --- UI LOGIC (Attached to window so HTML buttons can click them) ---
-    window.openPinScreen = function() {
-        document.getElementById('pin-overlay').style.display = 'flex';
-        document.getElementById('pin1').focus();
-    }
-
-    window.closePinScreen = function() {
-        document.getElementById('pin-overlay').style.display = 'none';
-        document.getElementById('pin-error').style.opacity = '0';
-        window.clearPins();
-    }
-
-    window.moveToNext = function(currentInput, event, index) {
-        if (event.key === 'Backspace' && index > 1) {
-            document.getElementById('pin' + (index - 1)).focus();
-            return;
-        }
-        if (currentInput.value.length === 1 && index < 4) {
-            document.getElementById('pin' + (index + 1)).focus();
-        }
-        if (index === 4 && currentInput.value.length === 1) {
-            window.verifyPin();
-        }
-    }
-
-    window.verifyPin = function() {
-        const enteredPin = document.getElementById('pin1').value + 
-                           document.getElementById('pin2').value + 
-                           document.getElementById('pin3').value + 
-                           document.getElementById('pin4').value;
-
-        if (enteredPin === "1983") {
-            document.getElementById('pin-overlay').style.display = 'none';
-            document.getElementById('main-view').style.display = 'none'; 
-            document.getElementById('admin-dashboard-view').style.display = 'block';
-            document.getElementById('pin-error').style.opacity = '0';
-            window.clearPins();
-            // We don't need to manually load reports, Firebase listens live!
-        } else {
-            document.getElementById('pin-error').style.opacity = '1';
-            window.clearPins();
-            document.getElementById('pin1').focus();
-        }
-    }
-
-    window.clearPins = function() {
-        for(let i=1; i<=4; i++) {
-            document.getElementById('pin' + i).value = '';
-        }
-    }
-
-    window.lockSystem = function() {
-        document.getElementById('admin-dashboard-view').style.display = 'none';
-        document.getElementById('main-view').style.display = 'block';
-    }
-
-    // --- FIREBASE LIVE DATABASE LOGIC ---
-    // This automatically triggers anytime someone on earth submits a report!
-    onValue(reportsRef, (snapshot) => {
-        const reportGrid = document.getElementById('adminReportGrid');
-        const data = snapshot.val();
-
-        if (!data) {
-            reportGrid.innerHTML = `
-                <div style="text-align: center; padding: 60px; background: rgba(0,255,0,0.05); border: 1px dashed rgba(0,255,0,0.3); border-radius: 12px;">
-                    <h3 style="color: #00e676; margin: 0;">✅ City Operations Normal</h3>
-                    <p style="color: gray; margin-top: 10px;">No anomalous reports active in the network.</p>
-                </div>`;
-            return;
-        }
-
-        let html = "";
-        // Loop through the cloud data
-        for (let id in data) {
-            let report = data[id];
-            html += `
-                <div class="admin-report-card">
-                    <h3 style="margin: 0 0 10px 0; color: #ff4d4d; font-size: 1.5rem;">⚠️ ${report.title}</h3>
-                    <p style="color: #ccc; margin: 0 0 20px 0; font-size: 1.1rem; line-height: 1.5;">${report.desc}</p>
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                        <span style="font-size: 0.9rem; color: #888;">Logged: ${report.date}</span>
-                        <button onclick="resolveReport('${id}')" style="background: transparent; border: 1px solid #00e6e6; color: #00e6e6; font-weight: bold; padding: 8px 15px; border-radius: 6px; cursor: pointer; transition: 0.3s;">Resolve Ticket ✓</button>
-                    </div>
-                </div>
-            `;
-        }
-        reportGrid.innerHTML = html;
-    });
-
-    // Delete a report from the global cloud
-    window.resolveReport = function(idToRemove) {
-        const exactReportRef = ref(db, 'reports/' + idToRemove);
-        remove(exactReportRef)
-            .then(() => console.log("Report wiped from global database."))
-            .catch((error) => console.error("Error removing report: ", error));
-    }
-</script>
 </body>
 </html>
