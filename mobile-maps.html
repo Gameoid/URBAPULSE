@@ -3,214 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UrbaPulse | Mobile Maps</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>UrbaPulse | Mobile Routing</title>
     <style>
         :root {
             --accent: #00d2ff;
             --danger: #ff4d4d;
+            --safe: #00e676;
             --surface: rgba(18, 20, 29, 0.95);
             --bg-color: #05050a;
+            --text-muted: #8b8e98;
         }
 
         body {
             margin: 0; padding: 0;
             background-color: var(--bg-color);
-            overflow: hidden; /* Fixes map in place */
-            font-family: sans-serif;
+            overflow: hidden; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: white;
         }
 
         /* --- THE MAP BASE --- */
         #mobile-map {
             width: 100vw;
             height: 100vh;
+            /* Replace with your actual map image if needed */
             background-image: url('media/photos/BG.png'); 
             background-size: cover;
             background-position: center;
             position: relative;
         }
 
-        /* --- FLOATING SEARCH --- */
-        .search-container {
+        /* --- SVG ROUTE OVERLAYS --- */
+        .route-layer {
             position: absolute;
-            top: 20px;
-            left: 15px;
-            right: 15px;
-            z-index: 10;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; /* Lets clicks pass through to map */
+            z-index: 5;
         }
 
-        .search-bar {
+        .route-path {
+            fill: none;
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0.3;
+            transition: opacity 0.3s, stroke-width 0.3s;
+        }
+
+        .route-path.active {
+            opacity: 1;
+            stroke-width: 8;
+            filter: drop-shadow(0 0 8px currentColor);
+            animation: dash-flow 2s linear infinite;
+        }
+
+        .path-danger { stroke: var(--danger); stroke-dasharray: 10 15; }
+        .path-safe { stroke: var(--safe); }
+
+        @keyframes dash-flow {
+            to { stroke-dashoffset: -50; }
+        }
+
+        /* Node Pin */
+        .map-pin {
+            position: absolute;
+            width: 16px; height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            top: 55%; left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.3);
+            z-index: 6;
+        }
+
+        /* --- FLOATING TOP SEARCH CARD --- */
+        .top-search-card {
+            position: absolute;
+            top: 15px; left: 15px; right: 15px;
             background: var(--surface);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 12px 15px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            border-radius: 16px;
+            padding: 15px;
+            z-index: 10;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .search-bar input {
-            background: transparent;
-            border: none;
-            color: white;
+        .input-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .input-row:last-child { margin-bottom: 0; }
+
+        .input-icon {
+            width: 20px; text-align: center;
+            font-size: 12px; color: var(--accent);
+            margin-right: 10px;
+        }
+
+        .input-field {
             flex-grow: 1;
-            margin-left: 10px;
-            font-size: 1rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.95rem;
             outline: none;
         }
 
-        /* --- PULSING PINS --- */
-        .pin {
-            position: absolute;
-            width: 18px; height: 18px;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: pulse 2s infinite;
-        }
-        .pin.report { background: var(--danger); animation: pulse-red 1.5s infinite; }
-        .pin.node { background: var(--accent); }
+        .input-field:focus { border-color: var(--accent); }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(0, 210, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
-        }
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
-            70% { box-shadow: 0 0 0 20px rgba(255, 77, 77, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
-        }
-
-        /* --- BOTTOM SHEET (THE MAGIC) --- */
+        /* --- BOTTOM SHEET --- */
         #bottom-sheet {
             position: fixed;
-            bottom: -100%; /* Hidden by default */
-            left: 0; right: 0;
+            bottom: 0; left: 0; right: 0;
             background: var(--surface);
             backdrop-filter: blur(20px);
             border-radius: 24px 24px 0 0;
-            padding: 25px;
+            padding: 20px;
             z-index: 100;
-            transition: 0.4s cubic-bezier(0.33, 1, 0.68, 1);
             box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.05);
+            border-top: 1px solid rgba(255,255,255,0.05);
         }
-
-        #bottom-sheet.open { bottom: 0; }
 
         .handle {
             width: 40px; height: 5px;
             background: rgba(255,255,255,0.2);
             border-radius: 10px;
-            margin: -10px auto 20px;
+            margin: 0 auto 20px;
         }
 
-        .stat-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .m-stat {
+        /* Route Option Cards */
+        .route-card {
             background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
             padding: 15px;
-            border-radius: 12px;
-            text-align: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .m-stat label { color: gray; font-size: 0.7rem; text-transform: uppercase; }
-        .m-stat div { color: white; font-size: 1.2rem; font-weight: bold; }
+        .route-card.selected {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .card-indicator {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 5px;
+        }
+
+        .card-danger { background: var(--danger); }
+        .card-safe { background: var(--safe); }
+
+        .route-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .route-title { font-weight: bold; font-size: 1.1rem; }
+        .route-time { font-size: 1.2rem; font-weight: 800; }
+
+        .route-stats {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex; gap: 15px;
+        }
+
+        .stat-highlight { color: white; font-weight: bold; }
+        .stat-danger { color: var(--danger); }
+        .stat-safe { color: var(--safe); }
+
+        .route-desc {
+            font-size: 0.8rem;
+            color: var(--safe);
+            margin-top: 8px;
+            background: rgba(0, 230, 118, 0.1);
+            padding: 6px 10px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .nav-btn {
+            background: var(--accent);
+            color: black;
+            border: none;
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.2);
+        }
     </style>
 </head>
 <body>
 
     <div id="mobile-map">
-        <div class="search-container">
-            <div class="search-bar">
-                <span>🔍</span>
-                <input type="search" placeholder="Search Faridabad Hub..." inputmode="search">
+        
+        <svg class="route-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path id="path-fast" class="route-path path-danger" d="M 30,70 L 70,30" />
+            
+            <path id="path-health" class="route-path path-safe active" d="M 30,70 L 40,40 L 70,30" />
+        </svg>
+
+        <div class="map-pin"></div>
+
+        <div class="top-search-card">
+            <div class="input-row">
+                <div class="input-icon">⚪</div>
+                <input type="text" class="input-field" value="Sec-17 Metro Station" readonly>
+            </div>
+            <div class="input-row">
+                <div class="input-icon" style="color: var(--danger);">📍</div>
+                <input type="text" class="input-field" value="Sector 17 Market Hub" readonly>
             </div>
         </div>
-
-        <div class="pin node" style="top: 40%; left: 50%;" onclick="showInfo('Sector 17 Node', '31°C', '42 PPM', 'Optimal')"></div>
-
-        <div id="dynamic-pins"></div>
     </div>
 
     <div id="bottom-sheet">
-        <div class="handle" onclick="closeSheet()"></div>
-        <h4 style="color: var(--accent); margin:0; font-size: 0.8rem;">ANOMALY DETECTED</h4>
-        <h2 id="sheet-title" style="color: white; margin: 10px 0;">Location</h2>
-        <p id="sheet-desc" style="color: gray; font-size: 0.9rem;">Details loading...</p>
-
-        <div class="stat-grid">
-            <div class="m-stat">
-                <label>Temp</label>
-                <div id="sheet-temp">--</div>
+        <div class="handle"></div>
+        
+        <div class="route-card" id="card-fast" onclick="selectRoute('fast')">
+            <div class="card-indicator card-danger"></div>
+            <div class="route-header">
+                <div class="route-title">Shortest Path (Fast)</div>
+                <div class="route-time stat-danger">12 min</div>
             </div>
-            <div class="m-stat">
-                <label>AQI</label>
-                <div id="sheet-aqi">--</div>
+            <div class="route-stats">
+                <div>Exposure: <span class="stat-danger">44°C</span></div>
+                <div>AQI: <span class="stat-danger">195</span></div>
             </div>
         </div>
 
-        <button onclick="closeSheet()" style="width: 100%; margin-top: 25px; padding: 15px; background: var(--accent); border: none; border-radius: 12px; font-weight: bold;">DISMISS</button>
+        <div class="route-card selected" id="card-health" onclick="selectRoute('health')">
+            <div class="card-indicator card-safe"></div>
+            <div class="route-header">
+                <div class="route-title">Health Gradient (Rec.)</div>
+                <div class="route-time stat-safe">14 min</div>
+            </div>
+            <div class="route-stats">
+                <div>Exposure: <span class="stat-safe">38°C</span></div>
+                <div>AQI: <span class="stat-safe">110</span></div>
+            </div>
+            <div class="route-desc">+2 mins via Shaded Corridor</div>
+        </div>
+
+        <button class="nav-btn" onclick="startNavigation()">Start Navigation</button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    <script>
+        function selectRoute(type) {
+            // Reset styles
+            document.getElementById('card-fast').classList.remove('selected');
+            document.getElementById('card-health').classList.remove('selected');
+            document.getElementById('path-fast').classList.remove('active');
+            document.getElementById('path-health').classList.remove('active');
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAmUH2z_Dy8Dpclydl3LAKtlyTBdLCSkmc",
-            authDomain: "urbapulse-dbms.firebaseapp.com",
-            databaseURL: "https://urbapulse-dbms-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "urbapulse-dbms",
-            storageBucket: "urbapulse-dbms.firebasestorage.app",
-            messagingSenderId: "1007127344295",
-            appId: "1:1007127344295:web:b6cb9727a905e8dc205782"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const reportsRef = ref(db, 'reports');
-
-        // --- DYNAMICALLY SHOW REPORTS ON MAP ---
-        onValue(reportsRef, (snapshot) => {
-            const container = document.getElementById('dynamic-pins');
-            container.innerHTML = ""; // Clear existing
-            const data = snapshot.val();
-
-            if (data) {
-                for (let id in data) {
-                    let report = data[id];
-                    // Logic: We spread reports randomly around the center for simulation
-                    // In a real app, you'd use Lat/Lng. Here, we'll randomize for effect!
-                    let randomTop = Math.floor(Math.random() * 50) + 20; 
-                    let randomLeft = Math.floor(Math.random() * 60) + 20;
-
-                    let pin = document.createElement('div');
-                    pin.className = "pin report";
-                    pin.style.top = randomTop + "%";
-                    pin.style.left = randomLeft + "%";
-                    pin.onclick = () => window.showInfo(report.title, "CRITICAL", "HIGH", report.desc);
-                    container.appendChild(pin);
-                }
+            // Apply active styles
+            if(type === 'fast') {
+                document.getElementById('card-fast').classList.add('selected');
+                document.getElementById('path-fast').classList.add('active');
+            } else {
+                document.getElementById('card-health').classList.add('selected');
+                document.getElementById('path-health').classList.add('active');
             }
-        });
-
-        window.showInfo = function(title, temp, aqi, desc) {
-            document.getElementById('sheet-title').innerText = title;
-            document.getElementById('sheet-temp').innerText = temp;
-            document.getElementById('sheet-aqi').innerText = aqi;
-            document.getElementById('sheet-desc').innerText = desc;
-            document.getElementById('bottom-sheet').classList.add('open');
         }
 
-        window.closeSheet = function() {
-            document.getElementById('bottom-sheet').classList.remove('open');
+        function startNavigation() {
+            const btn = document.querySelector('.nav-btn');
+            btn.innerHTML = "Rerouting...";
+            setTimeout(() => {
+                alert("Simulating connection to Health-Gradient Navigation API...");
+                btn.innerHTML = "Start Navigation";
+            }, 800);
         }
     </script>
 </body>
