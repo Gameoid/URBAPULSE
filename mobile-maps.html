@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>UrbaPulse | Mobile Routing</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
     <style>
         :root {
             --accent: #00d2ff;
@@ -22,62 +25,31 @@
             color: white;
         }
 
-        /* --- THE MAP BASE (WITH FALLBACK GRID) --- */
+        /* --- THE REAL LEAFLET MAP CONTAINER --- */
         #mobile-map {
             width: 100vw;
             height: 100vh;
-            background-color: #1a1c28; /* Fallback color */
-            /* If BG.png fails, it draws a cool digital grid instead! */
-            background-image: 
-                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
-                url('media/photos/BG.png'); 
-            background-size: 20px 20px, 20px 20px, cover;
-            background-position: center;
-            position: relative;
-        }
-
-        /* --- SVG ROUTE OVERLAYS --- */
-        .route-layer {
             position: absolute;
             top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none; 
-            z-index: 5;
+            z-index: 1; /* Map stays in the back */
         }
 
-        .route-path {
-            fill: none;
-            stroke-width: 6;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            opacity: 0.3;
-            transition: opacity 0.3s, stroke-width 0.3s;
-        }
+        /* Hide the leaflet zoom buttons on mobile for a cleaner look */
+        .leaflet-control-zoom { display: none !important; }
 
-        .route-path.active {
-            opacity: 1;
-            stroke-width: 8;
-            filter: drop-shadow(0 0 8px currentColor);
-            animation: dash-flow 2s linear infinite;
-        }
-
-        .path-danger { stroke: var(--danger); stroke-dasharray: 10 15; }
-        .path-safe { stroke: var(--safe); }
-
-        @keyframes dash-flow {
-            to { stroke-dashoffset: -50; }
-        }
-
-        .map-pin {
-            position: absolute;
-            width: 14px; height: 14px;
+        /* Custom pulsing dot for current location */
+        .pulse-marker {
             background: var(--accent);
+            border: 3px solid white;
             border-radius: 50%;
-            top: 55%; left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.3);
-            z-index: 6;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.8);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 210, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
         }
 
         /* --- COMPACT TOP SEARCH --- */
@@ -89,32 +61,16 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             padding: 10px 15px;
-            z-index: 10;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 10; /* Floats over map */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
-        .input-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 6px;
-        }
+        .input-row { display: flex; align-items: center; margin-bottom: 6px; }
         .input-row:last-child { margin-bottom: 0; }
-
-        .input-icon {
-            width: 20px; text-align: center;
-            font-size: 10px; color: var(--accent);
-            margin-right: 8px;
-        }
-
+        .input-icon { width: 20px; text-align: center; font-size: 10px; color: var(--accent); margin-right: 8px; }
         .input-field {
-            flex-grow: 1;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: 8px 12px;
-            border-radius: 6px;
-            color: white;
-            font-size: 0.85rem;
-            outline: none;
+            flex-grow: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);
+            padding: 8px 12px; border-radius: 6px; color: white; font-size: 0.85rem; outline: none;
         }
 
         /* --- ULTRA-COMPACT BOTTOM SHEET --- */
@@ -124,110 +80,49 @@
             background: var(--surface);
             backdrop-filter: blur(20px);
             border-radius: 20px 20px 0 0;
-            padding: 15px 15px 20px 15px; /* Much less padding */
-            z-index: 100;
+            padding: 15px 15px 20px 15px;
+            z-index: 100; /* Floats over map */
             box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
             border-top: 1px solid rgba(255,255,255,0.05);
         }
 
-        .handle {
-            width: 35px; height: 4px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 10px;
-            margin: 0 auto 12px;
-        }
+        .handle { width: 35px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 10px; margin: 0 auto 12px; }
 
-        /* Compact Route Cards */
+        /* Route Cards */
         .route-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 10px 12px; /* Thinner padding */
-            margin-bottom: 8px; /* Tighter gap */
-            cursor: pointer;
-            transition: 0.3s;
-            position: relative;
-            overflow: hidden;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;
         }
-
-        .route-card.selected {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.2);
-        }
-
-        .card-indicator {
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 4px;
-        }
-
+        .route-card.selected { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+        .card-indicator { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
         .card-danger { background: var(--danger); }
         .card-safe { background: var(--safe); }
-
-        .route-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 4px;
-        }
-
+        .route-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
         .route-title { font-weight: bold; font-size: 0.95rem; }
         .route-time { font-size: 1.05rem; font-weight: 800; }
-
-        .route-stats {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            display: flex; gap: 12px;
-        }
-
+        .route-stats { font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 12px; }
         .stat-danger { color: var(--danger); }
         .stat-safe { color: var(--safe); }
+        .route-desc { font-size: 0.7rem; color: var(--safe); margin-top: 6px; background: rgba(0, 230, 118, 0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; }
 
-        .route-desc {
-            font-size: 0.7rem;
-            color: var(--safe);
-            margin-top: 6px;
-            background: rgba(0, 230, 118, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            display: inline-block;
-        }
-
-        /* Slimmer Button */
         .nav-btn {
-            background: var(--accent);
-            color: black;
-            border: none;
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 800;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 6px;
-            cursor: pointer;
+            background: var(--accent); color: black; border: none; width: 100%; padding: 12px;
+            border-radius: 10px; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <div id="mobile-map">
-        
-        <svg class="route-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path id="path-fast" class="route-path path-danger" d="M 30,70 L 70,30" />
-            <path id="path-health" class="route-path path-safe active" d="M 30,70 L 40,40 L 70,30" />
-        </svg>
+    <div id="mobile-map"></div>
 
-        <div class="map-pin"></div>
-
-        <div class="top-search-card">
-            <div class="input-row">
-                <div class="input-icon">⚪</div>
-                <input type="text" class="input-field" value="Sec-17 Metro Station" readonly>
-            </div>
-            <div class="input-row">
-                <div class="input-icon" style="color: var(--danger);">📍</div>
-                <input type="text" class="input-field" value="Sector 17 Market Hub" readonly>
-            </div>
+    <div class="top-search-card">
+        <div class="input-row">
+            <div class="input-icon">⚪</div>
+            <input type="text" class="input-field" value="Sec-17 Metro Station" readonly>
+        </div>
+        <div class="input-row">
+            <div class="input-icon" style="color: var(--danger);">📍</div>
+            <input type="text" class="input-field" value="Sector 17 Market Hub" readonly>
         </div>
     </div>
 
@@ -262,19 +157,59 @@
         <button class="nav-btn" onclick="startNavigation()">Start Navigation</button>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // Initialize Map centered near Faridabad Sec 17
+        var map = L.map('mobile-map', { zoomControl: false }).setView([28.4024, 77.3181], 15);
+
+        // Add CartoDB Light tiles (matches your desktop screenshot perfectly)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            maxZoom: 19
+        }).addTo(map);
+
+        // --- MAP ROUTE COORDINATES ---
+        var startPoint = [28.3960, 77.3150]; // Bottom Left (Origin)
+        var endPoint = [28.4060, 77.3220];   // Bottom Right (Destination)
+        var detourPoint = [28.4090, 77.3160]; // Top Left (The Safe Detour)
+
+        // Draw Shortest Path (Red Dashed)
+        var fastRoute = L.polyline([startPoint, endPoint], {
+            color: '#ff4d4d',
+            weight: 4,
+            dashArray: '10, 10',
+            opacity: 0.4 // Starts dimmed
+        }).addTo(map);
+
+        // Draw Health Gradient (Green Solid)
+        var healthRoute = L.polyline([startPoint, detourPoint, endPoint], {
+            color: '#00e676',
+            weight: 6,
+            opacity: 1 // Starts active
+        }).addTo(map);
+
+        // Add User Location Dot (Cyan)
+        var userIcon = L.divIcon({ className: 'pulse-marker', iconSize: [16, 16] });
+        L.marker([28.4010, 77.3180], { icon: userIcon }).addTo(map);
+
+        // Zoom map to fit both routes perfectly
+        map.fitBounds(healthRoute.getBounds(), { paddingBottomRight: [0, 250] });
+
+        // --- UI INTERACTION LOGIC ---
         function selectRoute(type) {
+            // Reset UI Cards
             document.getElementById('card-fast').classList.remove('selected');
             document.getElementById('card-health').classList.remove('selected');
-            document.getElementById('path-fast').classList.remove('active');
-            document.getElementById('path-health').classList.remove('active');
 
+            // Switch Map Lines
             if(type === 'fast') {
                 document.getElementById('card-fast').classList.add('selected');
-                document.getElementById('path-fast').classList.add('active');
+                fastRoute.setStyle({ weight: 6, opacity: 1 });
+                healthRoute.setStyle({ weight: 4, opacity: 0.4 });
             } else {
                 document.getElementById('card-health').classList.add('selected');
-                document.getElementById('path-health').classList.add('active');
+                fastRoute.setStyle({ weight: 4, opacity: 0.4 });
+                healthRoute.setStyle({ weight: 6, opacity: 1 });
             }
         }
 
