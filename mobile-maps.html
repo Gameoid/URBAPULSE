@@ -10,7 +10,7 @@
             --danger: #ff4d4d;
             --safe: #00e676;
             --surface: rgba(18, 20, 29, 0.95);
-            --bg-color: #05050a;
+            --bg-color: #0b0f19;
             --text-muted: #8b8e98;
         }
 
@@ -22,13 +22,17 @@
             color: white;
         }
 
-        /* --- THE MAP BASE --- */
+        /* --- THE MAP BASE (WITH FALLBACK GRID) --- */
         #mobile-map {
             width: 100vw;
             height: 100vh;
-            /* Replace with your actual map image if needed */
-            background-image: url('media/photos/BG.png'); 
-            background-size: cover;
+            background-color: #1a1c28; /* Fallback color */
+            /* If BG.png fails, it draws a cool digital grid instead! */
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+                url('media/photos/BG.png'); 
+            background-size: 20px 20px, 20px 20px, cover;
             background-position: center;
             position: relative;
         }
@@ -38,7 +42,7 @@
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            pointer-events: none; /* Lets clicks pass through to map */
+            pointer-events: none; 
             z-index: 5;
         }
 
@@ -65,10 +69,9 @@
             to { stroke-dashoffset: -50; }
         }
 
-        /* Node Pin */
         .map-pin {
             position: absolute;
-            width: 16px; height: 16px;
+            width: 14px; height: 14px;
             background: var(--accent);
             border-radius: 50%;
             top: 55%; left: 50%;
@@ -77,15 +80,15 @@
             z-index: 6;
         }
 
-        /* --- FLOATING TOP SEARCH CARD --- */
+        /* --- COMPACT TOP SEARCH --- */
         .top-search-card {
             position: absolute;
             top: 15px; left: 15px; right: 15px;
             background: var(--surface);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 15px;
+            border-radius: 12px;
+            padding: 10px 15px;
             z-index: 10;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
@@ -93,56 +96,54 @@
         .input-row {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
         .input-row:last-child { margin-bottom: 0; }
 
         .input-icon {
             width: 20px; text-align: center;
-            font-size: 12px; color: var(--accent);
-            margin-right: 10px;
+            font-size: 10px; color: var(--accent);
+            margin-right: 8px;
         }
 
         .input-field {
             flex-grow: 1;
             background: rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.05);
-            padding: 12px;
-            border-radius: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
             color: white;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             outline: none;
         }
 
-        .input-field:focus { border-color: var(--accent); }
-
-        /* --- BOTTOM SHEET --- */
+        /* --- ULTRA-COMPACT BOTTOM SHEET --- */
         #bottom-sheet {
             position: fixed;
             bottom: 0; left: 0; right: 0;
             background: var(--surface);
             backdrop-filter: blur(20px);
-            border-radius: 24px 24px 0 0;
-            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            padding: 15px 15px 20px 15px; /* Much less padding */
             z-index: 100;
             box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
             border-top: 1px solid rgba(255,255,255,0.05);
         }
 
         .handle {
-            width: 40px; height: 5px;
+            width: 35px; height: 4px;
             background: rgba(255,255,255,0.2);
             border-radius: 10px;
-            margin: 0 auto 20px;
+            margin: 0 auto 12px;
         }
 
-        /* Route Option Cards */
+        /* Compact Route Cards */
         .route-card {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 12px;
+            border-radius: 12px;
+            padding: 10px 12px; /* Thinner padding */
+            margin-bottom: 8px; /* Tighter gap */
             cursor: pointer;
             transition: 0.3s;
             position: relative;
@@ -157,7 +158,7 @@
         .card-indicator {
             position: absolute;
             left: 0; top: 0; bottom: 0;
-            width: 5px;
+            width: 4px;
         }
 
         .card-danger { background: var(--danger); }
@@ -165,46 +166,45 @@
 
         .route-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
-        .route-title { font-weight: bold; font-size: 1.1rem; }
-        .route-time { font-size: 1.2rem; font-weight: 800; }
+        .route-title { font-weight: bold; font-size: 0.95rem; }
+        .route-time { font-size: 1.05rem; font-weight: 800; }
 
         .route-stats {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
-            display: flex; gap: 15px;
+            display: flex; gap: 12px;
         }
 
-        .stat-highlight { color: white; font-weight: bold; }
         .stat-danger { color: var(--danger); }
         .stat-safe { color: var(--safe); }
 
         .route-desc {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: var(--safe);
-            margin-top: 8px;
+            margin-top: 6px;
             background: rgba(0, 230, 118, 0.1);
-            padding: 6px 10px;
-            border-radius: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
             display: inline-block;
         }
 
+        /* Slimmer Button */
         .nav-btn {
             background: var(--accent);
             color: black;
             border: none;
             width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            font-weight: 900;
-            font-size: 1.1rem;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 1rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-top: 10px;
+            margin-top: 6px;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.2);
         }
     </style>
 </head>
@@ -214,7 +214,6 @@
         
         <svg class="route-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path id="path-fast" class="route-path path-danger" d="M 30,70 L 70,30" />
-            
             <path id="path-health" class="route-path path-safe active" d="M 30,70 L 40,40 L 70,30" />
         </svg>
 
@@ -265,13 +264,11 @@
 
     <script>
         function selectRoute(type) {
-            // Reset styles
             document.getElementById('card-fast').classList.remove('selected');
             document.getElementById('card-health').classList.remove('selected');
             document.getElementById('path-fast').classList.remove('active');
             document.getElementById('path-health').classList.remove('active');
 
-            // Apply active styles
             if(type === 'fast') {
                 document.getElementById('card-fast').classList.add('selected');
                 document.getElementById('path-fast').classList.add('active');
