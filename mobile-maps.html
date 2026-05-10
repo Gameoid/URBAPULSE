@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UrbaPulse | Mobile Maps</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --accent: #00d2ff;
+            --danger: #ff4d4d;
+            --surface: rgba(18, 20, 29, 0.95);
+            --bg-color: #05050a;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            overflow: hidden; /* Fixes map in place */
+            font-family: sans-serif;
+        }
+
+        /* --- THE MAP BASE --- */
+        #mobile-map {
+            width: 100vw;
+            height: 100vh;
+            background-image: url('media/photos/BG.png'); 
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        /* --- FLOATING SEARCH --- */
+        .search-container {
+            position: absolute;
+            top: 20px;
+            left: 15px;
+            right: 15px;
+            z-index: 10;
+        }
+
+        .search-bar {
+            background: var(--surface);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: white;
+            flex-grow: 1;
+            margin-left: 10px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        /* --- PULSING PINS --- */
+        .pin {
+            position: absolute;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 2s infinite;
+        }
+        .pin.report { background: var(--danger); animation: pulse-red 1.5s infinite; }
+        .pin.node { background: var(--accent); }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 210, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 77, 77, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+        }
+
+        /* --- BOTTOM SHEET (THE MAGIC) --- */
+        #bottom-sheet {
+            position: fixed;
+            bottom: -100%; /* Hidden by default */
+            left: 0; right: 0;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border-radius: 24px 24px 0 0;
+            padding: 25px;
+            z-index: 100;
+            transition: 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        #bottom-sheet.open { bottom: 0; }
+
+        .handle {
+            width: 40px; height: 5px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            margin: -10px auto 20px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .m-stat {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .m-stat label { color: gray; font-size: 0.7rem; text-transform: uppercase; }
+        .m-stat div { color: white; font-size: 1.2rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="mobile-map">
+        <div class="search-container">
+            <div class="search-bar">
+                <span>🔍</span>
+                <input type="search" placeholder="Search Faridabad Hub..." inputmode="search">
+            </div>
+        </div>
+
+        <div class="pin node" style="top: 40%; left: 50%;" onclick="showInfo('Sector 17 Node', '31°C', '42 PPM', 'Optimal')"></div>
+
+        <div id="dynamic-pins"></div>
+    </div>
+
+    <div id="bottom-sheet">
+        <div class="handle" onclick="closeSheet()"></div>
+        <h4 style="color: var(--accent); margin:0; font-size: 0.8rem;">ANOMALY DETECTED</h4>
+        <h2 id="sheet-title" style="color: white; margin: 10px 0;">Location</h2>
+        <p id="sheet-desc" style="color: gray; font-size: 0.9rem;">Details loading...</p>
+
+        <div class="stat-grid">
+            <div class="m-stat">
+                <label>Temp</label>
+                <div id="sheet-temp">--</div>
+            </div>
+            <div class="m-stat">
+                <label>AQI</label>
+                <div id="sheet-aqi">--</div>
+            </div>
+        </div>
+
+        <button onclick="closeSheet()" style="width: 100%; margin-top: 25px; padding: 15px; background: var(--accent); border: none; border-radius: 12px; font-weight: bold;">DISMISS</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmUH2z_Dy8Dpclydl3LAKtlyTBdLCSkmc",
+            authDomain: "urbapulse-dbms.firebaseapp.com",
+            databaseURL: "https://urbapulse-dbms-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "urbapulse-dbms",
+            storageBucket: "urbapulse-dbms.firebasestorage.app",
+            messagingSenderId: "1007127344295",
+            appId: "1:1007127344295:web:b6cb9727a905e8dc205782"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const reportsRef = ref(db, 'reports');
+
+        // --- DYNAMICALLY SHOW REPORTS ON MAP ---
+        onValue(reportsRef, (snapshot) => {
+            const container = document.getElementById('dynamic-pins');
+            container.innerHTML = ""; // Clear existing
+            const data = snapshot.val();
+
+            if (data) {
+                for (let id in data) {
+                    let report = data[id];
+                    // Logic: We spread reports randomly around the center for simulation
+                    // In a real app, you'd use Lat/Lng. Here, we'll randomize for effect!
+                    let randomTop = Math.floor(Math.random() * 50) + 20; 
+                    let randomLeft = Math.floor(Math.random() * 60) + 20;
+
+                    let pin = document.createElement('div');
+                    pin.className = "pin report";
+                    pin.style.top = randomTop + "%";
+                    pin.style.left = randomLeft + "%";
+                    pin.onclick = () => window.showInfo(report.title, "CRITICAL", "HIGH", report.desc);
+                    container.appendChild(pin);
+                }
+            }
+        });
+
+        window.showInfo = function(title, temp, aqi, desc) {
+            document.getElementById('sheet-title').innerText = title;
+            document.getElementById('sheet-temp').innerText = temp;
+            document.getElementById('sheet-aqi').innerText = aqi;
+            document.getElementById('sheet-desc').innerText = desc;
+            document.getElementById('bottom-sheet').classList.add('open');
+        }
+
+        window.closeSheet = function() {
+            document.getElementById('bottom-sheet').classList.remove('open');
+        }
+    </script>
+</body>
+</html>
