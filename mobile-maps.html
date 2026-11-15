@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>UrbaPulse | Mobile Routing</title>
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
     <style>
         :root {
             --accent: #00d2ff;
@@ -25,31 +23,14 @@
             color: white;
         }
 
-        /* --- THE REAL LEAFLET MAP CONTAINER --- */
+        /* --- THE MAP CONTAINER --- */
         #mobile-map {
             width: 100vw;
             height: 100vh;
             position: absolute;
             top: 0; left: 0;
             z-index: 1; /* Map stays in the back */
-        }
-
-        /* Hide the leaflet zoom buttons on mobile for a cleaner look */
-        .leaflet-control-zoom { display: none !important; }
-
-        /* Custom pulsing dot for current location */
-        .pulse-marker {
-            background: var(--accent);
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(0, 210, 255, 0.8);
-            animation: pulse-dot 2s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(0, 210, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
+            border: 0;
         }
 
         /* --- COMPACT TOP SEARCH --- */
@@ -113,7 +94,11 @@
 </head>
 <body>
 
-    <div id="mobile-map"></div>
+    <iframe 
+        id="mobile-map"
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d7004.457704442871!2d77.30727912814038!3d28.38730557996039!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cdc43d495d1f7%3A0xdfb2b27b63173bb5!2sMVN%20School%20Sector%2017!5e0!3m2!1sen!2sin!4v1699366814583!5m2!1sen!2sin&markers=color:red%7Clabel:%7C28.38730557996039,77.30727912814038"
+        allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
 
     <div class="top-search-card">
         <div class="input-row">
@@ -157,59 +142,17 @@
         <button class="nav-btn" onclick="startNavigation()">Start Navigation</button>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize Map centered near Faridabad Sec 17
-        var map = L.map('mobile-map', { zoomControl: false }).setView([28.4024, 77.3181], 15);
-
-        // Add CartoDB Light tiles (matches your desktop screenshot perfectly)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CARTO',
-            maxZoom: 19
-        }).addTo(map);
-
-        // --- MAP ROUTE COORDINATES ---
-        var startPoint = [28.3960, 77.3150]; // Bottom Left (Origin)
-        var endPoint = [28.4060, 77.3220];   // Bottom Right (Destination)
-        var detourPoint = [28.4090, 77.3160]; // Top Left (The Safe Detour)
-
-        // Draw Shortest Path (Red Dashed)
-        var fastRoute = L.polyline([startPoint, endPoint], {
-            color: '#ff4d4d',
-            weight: 4,
-            dashArray: '10, 10',
-            opacity: 0.4 // Starts dimmed
-        }).addTo(map);
-
-        // Draw Health Gradient (Green Solid)
-        var healthRoute = L.polyline([startPoint, detourPoint, endPoint], {
-            color: '#00e676',
-            weight: 6,
-            opacity: 1 // Starts active
-        }).addTo(map);
-
-        // Add User Location Dot (Cyan)
-        var userIcon = L.divIcon({ className: 'pulse-marker', iconSize: [16, 16] });
-        L.marker([28.4010, 77.3180], { icon: userIcon }).addTo(map);
-
-        // Zoom map to fit both routes perfectly
-        map.fitBounds(healthRoute.getBounds(), { paddingBottomRight: [0, 250] });
-
         // --- UI INTERACTION LOGIC ---
         function selectRoute(type) {
             // Reset UI Cards
             document.getElementById('card-fast').classList.remove('selected');
             document.getElementById('card-health').classList.remove('selected');
 
-            // Switch Map Lines
             if(type === 'fast') {
                 document.getElementById('card-fast').classList.add('selected');
-                fastRoute.setStyle({ weight: 6, opacity: 1 });
-                healthRoute.setStyle({ weight: 4, opacity: 0.4 });
             } else {
                 document.getElementById('card-health').classList.add('selected');
-                fastRoute.setStyle({ weight: 4, opacity: 0.4 });
-                healthRoute.setStyle({ weight: 6, opacity: 1 });
             }
         }
 
