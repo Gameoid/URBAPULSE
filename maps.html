@@ -20,6 +20,45 @@
             gap: 20px;
         }
 
+        /* Swap Button Container */
+        .inputs-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .form-group input {
+            padding-right: 45px; /* Jagah chhodni tak button text hide na kare */
+        }
+
+        .swap-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: var(--transition);
+            z-index: 10;
+        }
+
+        .swap-btn:hover {
+            background: var(--border);
+            color: white;
+        }
+
         #map {
             width: 100%;
             height: 100%;
@@ -68,27 +107,37 @@
         <aside class="search-panel">
             <h2 style="margin: 0; font-size: 1.4rem;">Route Planning</h2>
             
-            <div class="form-group" style="margin-top: 10px;">
-                <label>Origin</label>
-                <input type="text" id="origin-input" value="Sec-17 Metro Station, Faridabad" placeholder="Enter Origin..." onchange="updateDesktopMap()">
-            </div>
-            <div class="form-group">
-                <label>Destination</label>
-                <input type="text" id="dest-input" value="Sector 17 Market Hub, Faridabad" placeholder="Enter Destination..." onchange="updateDesktopMap()">
+            <div class="inputs-wrapper">
+                <div class="form-group">
+                    <label>Origin</label>
+                    <input type="text" id="origin-input" value="Sec-17 Metro Station, Faridabad" placeholder="Enter Origin...">
+                </div>
+                
+                <!-- Swap Button -->
+                <button class="swap-btn" onclick="swapLocations()" title="Swap locations">⇅</button>
+
+                <div class="form-group">
+                    <label>Destination</label>
+                    <input type="text" id="dest-input" value="Sector 17 Market Hub, Faridabad" placeholder="Enter Destination...">
+                </div>
             </div>
 
             <hr style="border: 0.5px solid var(--border); width: 100%;">
 
             <div id="route-options">
-                <div class="route-card hot" onclick="updateDesktopMap()">
-                    <h4 style="margin: 0;">Shortest Path (Fast)</h4>
-                    <p style="font-size: 0.8rem; color: var(--danger);">Exposure: 44°C | AQI: 195</p>
+                <div class="route-card hot" onclick="updateDesktopMap(true)">
+                    <h4 style="margin: 0; display: flex; justify-content: space-between;">
+                        <span>Shortest Path</span> <span id="time-fast">12 min</span>
+                    </h4>
+                    <p style="font-size: 0.8rem; color: var(--danger);">Exposure: <span id="temp-fast">44</span>°C | AQI: <span id="aqi-fast">195</span></p>
                 </div>
                 
-                <div class="route-card safe" style="margin-top: 15px;" onclick="updateDesktopMap()">
-                    <h4 style="margin: 0;">Health Gradient (Rec.)</h4>
-                    <p style="font-size: 0.8rem; color: var(--success);">Exposure: 38°C | AQI: 110</p>
-                    <small style="color: var(--text-muted);">+2 mins walk via Shaded Corridor</small>
+                <div class="route-card safe" style="margin-top: 15px;" onclick="updateDesktopMap(true)">
+                    <h4 style="margin: 0; display: flex; justify-content: space-between;">
+                        <span>Health Gradient</span> <span id="time-safe">14 min</span>
+                    </h4>
+                    <p style="font-size: 0.8rem; color: var(--success);">Exposure: <span id="temp-safe">38</span>°C | AQI: <span id="aqi-safe">110</span></p>
+                    <small style="color: var(--text-muted);" id="detour-text">+2 mins walk via Shaded Corridor</small>
                 </div>
             </div>
         </aside>
@@ -109,24 +158,75 @@
     </main>
 
     <script>
-        function updateDesktopMap() {
+        let lastQuery = "";
+
+        // Simulated data generator
+        function generateRouteStats(origin, dest) {
+            let hash = 0;
+            const str = origin + dest;
+            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+            hash = Math.abs(hash);
+
+            const baseTime = (hash % 35) + 5;
+            const detour = (hash % 4) + 2; 
+            const fastTemp = (hash % 10) + 38;
+            const safeTemp = fastTemp - ((hash % 5) + 3);
+            const fastAQI = (hash % 150) + 120;
+            const safeAQI = fastAQI - ((hash % 50) + 30);
+
+            return { baseTime, detour, fastTemp, safeTemp, fastAQI, safeAQI };
+        }
+
+        // SWAP FUNCTION
+        function swapLocations() {
+            const originInput = document.getElementById('origin-input');
+            const destInput = document.getElementById('dest-input');
+            
+            const temp = originInput.value;
+            originInput.value = destInput.value;
+            destInput.value = temp;
+
+            // Trigger map update
+            updateDesktopMap(true);
+        }
+
+        function updateDesktopMap(force = false) {
             const origin = document.getElementById('origin-input').value.trim();
             const dest = document.getElementById('dest-input').value.trim();
             const mapFrame = document.getElementById('map');
+            const currentQuery = origin + "->" + dest;
+
+            if (!force && currentQuery === lastQuery) return;
+            lastQuery = currentQuery;
 
             if (origin && dest) {
                 mapFrame.src = `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(dest)}&output=embed`;
+                
+                const stats = generateRouteStats(origin, dest);
+                document.getElementById('time-fast').innerText = `${stats.baseTime} min`;
+                document.getElementById('temp-fast').innerText = stats.fastTemp;
+                document.getElementById('aqi-fast').innerText = stats.fastAQI;
+
+                document.getElementById('time-safe').innerText = `${stats.baseTime + stats.detour} min`;
+                document.getElementById('temp-safe').innerText = stats.safeTemp;
+                document.getElementById('aqi-safe').innerText = stats.safeAQI;
+                document.getElementById('detour-text').innerText = `+${stats.detour} mins walk via Shaded Corridor`;
+
             } else if (dest || origin) {
                 const singlePlace = dest || origin;
                 mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(singlePlace)}&output=embed`;
             }
         }
 
-        document.getElementById('origin-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') updateDesktopMap();
-        });
-        document.getElementById('dest-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') updateDesktopMap();
+        ['origin-input', 'dest-input'].forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('blur', () => updateDesktopMap());
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    updateDesktopMap(true);
+                }
+            });
         });
     </script>
 </body>
