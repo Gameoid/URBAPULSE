@@ -53,6 +53,9 @@
             flex-grow: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);
             padding: 8px 12px; border-radius: 6px; color: white; font-size: 0.85rem; outline: none;
         }
+        .input-field:focus {
+            border-color: var(--accent);
+        }
 
         /* --- ULTRA-COMPACT BOTTOM SHEET --- */
         #bottom-sheet {
@@ -96,18 +99,18 @@
 
     <iframe 
         id="mobile-map"
-        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d7004.457704442871!2d77.30727912814038!3d28.38730557996039!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cdc43d495d1f7%3A0xdfb2b27b63173bb5!2sMVN%20School%20Sector%2017!5e0!3m2!1sen!2sin!4v1699366814583!5m2!1sen!2sin&markers=color:red%7Clabel:%7C28.38730557996039,77.30727912814038"
+        src="https://maps.google.com/maps?saddr=Sec-17+Metro+Station+Faridabad&daddr=Sector+17+Market+Hub+Faridabad&output=embed"
         allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
     </iframe>
 
     <div class="top-search-card">
         <div class="input-row">
             <div class="input-icon">⚪</div>
-            <input type="text" class="input-field" value="Sec-17 Metro Station" readonly>
+            <input type="text" id="origin-input" class="input-field" value="Sec-17 Metro Station, Faridabad" placeholder="Enter Origin..." onchange="updateRouteMap()">
         </div>
         <div class="input-row">
             <div class="input-icon" style="color: var(--danger);">📍</div>
-            <input type="text" class="input-field" value="Sector 17 Market Hub" readonly>
+            <input type="text" id="dest-input" class="input-field" value="Sector 17 Market Hub, Faridabad" placeholder="Enter Destination..." onchange="updateRouteMap()">
         </div>
     </div>
 
@@ -143,9 +146,29 @@
     </div>
 
     <script>
+        // --- LIVE LOCATION / ROUTE UPDATE ---
+        function updateRouteMap() {
+            const origin = document.getElementById('origin-input').value.trim();
+            const dest = document.getElementById('dest-input').value.trim();
+            const mapFrame = document.getElementById('mobile-map');
+
+            if (origin && dest) {
+                mapFrame.src = `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(dest)}&output=embed`;
+            } else if (dest || origin) {
+                const singlePlace = dest || origin;
+                mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(singlePlace)}&output=embed`;
+            }
+        }
+
+        document.getElementById('origin-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') updateRouteMap();
+        });
+        document.getElementById('dest-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') updateRouteMap();
+        });
+
         // --- UI INTERACTION LOGIC ---
         function selectRoute(type) {
-            // Reset UI Cards
             document.getElementById('card-fast').classList.remove('selected');
             document.getElementById('card-health').classList.remove('selected');
 
@@ -157,6 +180,7 @@
         }
 
         function startNavigation() {
+            updateRouteMap();
             const btn = document.querySelector('.nav-btn');
             btn.innerHTML = "Rerouting...";
             setTimeout(() => {
