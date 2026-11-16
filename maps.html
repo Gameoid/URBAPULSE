@@ -30,7 +30,7 @@
         }
 
         .form-group input {
-            padding-right: 45px; /* Jagah chhodni tak button text hide na kare */
+            padding-right: 45px; 
         }
 
         .swap-btn {
@@ -125,19 +125,21 @@
             <hr style="border: 0.5px solid var(--border); width: 100%;">
 
             <div id="route-options">
+                <!-- Static Shortest Path -->
                 <div class="route-card hot" onclick="updateDesktopMap(true)">
                     <h4 style="margin: 0; display: flex; justify-content: space-between;">
-                        <span>Shortest Path</span> <span id="time-fast">12 min</span>
+                        <span>Shortest Path (Fast)</span> <span>12 min</span>
                     </h4>
-                    <p style="font-size: 0.8rem; color: var(--danger);">Exposure: <span id="temp-fast">44</span>°C | AQI: <span id="aqi-fast">195</span></p>
+                    <p style="font-size: 0.8rem; color: var(--danger); margin-bottom: 0;">Exposure: 44°C | AQI: 195</p>
                 </div>
                 
+                <!-- Static Health Gradient -->
                 <div class="route-card safe" style="margin-top: 15px;" onclick="updateDesktopMap(true)">
                     <h4 style="margin: 0; display: flex; justify-content: space-between;">
-                        <span>Health Gradient</span> <span id="time-safe">14 min</span>
+                        <span>Health Gradient (Rec.)</span> <span>14 min</span>
                     </h4>
-                    <p style="font-size: 0.8rem; color: var(--success);">Exposure: <span id="temp-safe">38</span>°C | AQI: <span id="aqi-safe">110</span></p>
-                    <small style="color: var(--text-muted);" id="detour-text">+2 mins walk via Shaded Corridor</small>
+                    <p style="font-size: 0.8rem; color: var(--success); margin-bottom: 5px;">Exposure: 38°C | AQI: 110</p>
+                    <small style="color: var(--text-muted);">+2 mins walk via Shaded Corridor</small>
                 </div>
             </div>
         </aside>
@@ -160,23 +162,6 @@
     <script>
         let lastQuery = "";
 
-        // Simulated data generator
-        function generateRouteStats(origin, dest) {
-            let hash = 0;
-            const str = origin + dest;
-            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
-            hash = Math.abs(hash);
-
-            const baseTime = (hash % 35) + 5;
-            const detour = (hash % 4) + 2; 
-            const fastTemp = (hash % 10) + 38;
-            const safeTemp = fastTemp - ((hash % 5) + 3);
-            const fastAQI = (hash % 150) + 120;
-            const safeAQI = fastAQI - ((hash % 50) + 30);
-
-            return { baseTime, detour, fastTemp, safeTemp, fastAQI, safeAQI };
-        }
-
         // SWAP FUNCTION
         function swapLocations() {
             const originInput = document.getElementById('origin-input');
@@ -186,10 +171,10 @@
             originInput.value = destInput.value;
             destInput.value = temp;
 
-            // Trigger map update
             updateDesktopMap(true);
         }
 
+        // MAP UPDATE FUNCTION
         function updateDesktopMap(force = false) {
             const origin = document.getElementById('origin-input').value.trim();
             const dest = document.getElementById('dest-input').value.trim();
@@ -201,17 +186,6 @@
 
             if (origin && dest) {
                 mapFrame.src = `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(dest)}&output=embed`;
-                
-                const stats = generateRouteStats(origin, dest);
-                document.getElementById('time-fast').innerText = `${stats.baseTime} min`;
-                document.getElementById('temp-fast').innerText = stats.fastTemp;
-                document.getElementById('aqi-fast').innerText = stats.fastAQI;
-
-                document.getElementById('time-safe').innerText = `${stats.baseTime + stats.detour} min`;
-                document.getElementById('temp-safe').innerText = stats.safeTemp;
-                document.getElementById('aqi-safe').innerText = stats.safeAQI;
-                document.getElementById('detour-text').innerText = `+${stats.detour} mins walk via Shaded Corridor`;
-
             } else if (dest || origin) {
                 const singlePlace = dest || origin;
                 mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(singlePlace)}&output=embed`;
