@@ -23,13 +23,12 @@
             color: white;
         }
 
-        /* --- THE MAP CONTAINER --- */
         #mobile-map {
             width: 100vw;
             height: 100vh;
             position: absolute;
             top: 0; left: 0;
-            z-index: 1; /* Map stays in the back */
+            z-index: 1;
             border: 0;
         }
 
@@ -42,20 +41,43 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             padding: 10px 15px;
-            z-index: 10; /* Floats over map */
+            z-index: 10;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
         .input-row { display: flex; align-items: center; margin-bottom: 6px; }
         .input-row:last-child { margin-bottom: 0; }
         .input-icon { width: 20px; text-align: center; font-size: 10px; color: var(--accent); margin-right: 8px; }
+        
         .input-field {
             flex-grow: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);
-            padding: 8px 12px; border-radius: 6px; color: white; font-size: 0.85rem; outline: none;
+            padding: 8px 40px 8px 12px; 
+            border-radius: 6px; color: white; font-size: 0.85rem; outline: none;
         }
-        .input-field:focus {
-            border-color: var(--accent);
+        .input-field:focus { border-color: var(--accent); }
+
+        /* Mobile Swap Button */
+        .swap-btn-mobile {
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(18, 20, 29, 0.95);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--accent);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 1.1rem;
+            transition: 0.2s;
         }
+        .swap-btn-mobile:active { transform: translateY(-50%) scale(0.9); }
 
         /* --- ULTRA-COMPACT BOTTOM SHEET --- */
         #bottom-sheet {
@@ -65,14 +87,13 @@
             backdrop-filter: blur(20px);
             border-radius: 20px 20px 0 0;
             padding: 15px 15px 20px 15px;
-            z-index: 100; /* Floats over map */
+            z-index: 100;
             box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
             border-top: 1px solid rgba(255,255,255,0.05);
         }
 
         .handle { width: 35px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 10px; margin: 0 auto 12px; }
 
-        /* Route Cards */
         .route-card {
             background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
             border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;
@@ -106,17 +127,22 @@
     <div class="top-search-card">
         <div class="input-row">
             <div class="input-icon">⚪</div>
-            <input type="text" id="origin-input" class="input-field" value="Sec-17 Metro Station, Faridabad" placeholder="Enter Origin..." onchange="updateRouteMap()">
+            <input type="text" id="origin-input" class="input-field" value="Sec-17 Metro Station, Faridabad" placeholder="Enter Origin...">
         </div>
+        
+        <!-- Mobile Swap Button -->
+        <button class="swap-btn-mobile" onclick="swapLocations()">⇅</button>
+
         <div class="input-row">
             <div class="input-icon" style="color: var(--danger);">📍</div>
-            <input type="text" id="dest-input" class="input-field" value="Sector 17 Market Hub, Faridabad" placeholder="Enter Destination..." onchange="updateRouteMap()">
+            <input type="text" id="dest-input" class="input-field" value="Sector 17 Market Hub, Faridabad" placeholder="Enter Destination...">
         </div>
     </div>
 
     <div id="bottom-sheet">
         <div class="handle"></div>
         
+        <!-- Static Shortest Path -->
         <div class="route-card" id="card-fast" onclick="selectRoute('fast')">
             <div class="card-indicator card-danger"></div>
             <div class="route-header">
@@ -129,6 +155,7 @@
             </div>
         </div>
 
+        <!-- Static Health Gradient -->
         <div class="route-card selected" id="card-health" onclick="selectRoute('health')">
             <div class="card-indicator card-safe"></div>
             <div class="route-header">
@@ -146,11 +173,29 @@
     </div>
 
     <script>
-        // --- LIVE LOCATION / ROUTE UPDATE ---
-        function updateRouteMap() {
+        let lastMobileQuery = "";
+
+        // SWAP FUNCTION
+        function swapLocations() {
+            const originInput = document.getElementById('origin-input');
+            const destInput = document.getElementById('dest-input');
+            
+            const temp = originInput.value;
+            originInput.value = destInput.value;
+            destInput.value = temp;
+
+            updateRouteMap(true);
+        }
+
+        // MAP UPDATE FUNCTION
+        function updateRouteMap(force = false) {
             const origin = document.getElementById('origin-input').value.trim();
             const dest = document.getElementById('dest-input').value.trim();
             const mapFrame = document.getElementById('mobile-map');
+            const currentQuery = origin + "->" + dest;
+
+            if (!force && currentQuery === lastMobileQuery) return;
+            lastMobileQuery = currentQuery;
 
             if (origin && dest) {
                 mapFrame.src = `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(dest)}&output=embed`;
@@ -160,11 +205,15 @@
             }
         }
 
-        document.getElementById('origin-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') updateRouteMap();
-        });
-        document.getElementById('dest-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') updateRouteMap();
+        ['origin-input', 'dest-input'].forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('blur', () => updateRouteMap());
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    updateRouteMap(true);
+                }
+            });
         });
 
         // --- UI INTERACTION LOGIC ---
@@ -180,7 +229,7 @@
         }
 
         function startNavigation() {
-            updateRouteMap();
+            updateRouteMap(true);
             const btn = document.querySelector('.nav-btn');
             btn.innerHTML = "Rerouting...";
             setTimeout(() => {
