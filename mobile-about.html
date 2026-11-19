@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UrbaPulse | About</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #0b0f19; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .m-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: rgba(11,15,25,0.95); position: sticky; top: 0;
+        }
+        .m-logo { font-weight: 800; color: #00d2ff; text-decoration: none; font-size: 1.1rem; }
+        .m-wrap { padding: 18px 16px 32px; display: flex; flex-direction: column; gap: 14px; }
+        .m-wrap h2 { margin: 0 0 4px; font-size: 1.45rem; }
+        .info-card {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; padding: 16px;
+        }
+        .info-card h3 { margin: 0 0 6px; font-size: 1rem; color: #00d2ff; }
+        .info-card p { margin: 0; font-size: 0.86rem; color: #cbd5e1; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <header class="m-nav">
+        <a href="mobile-index.html" class="m-logo">← URBAPULSE</a>
+        <span style="font-size: 0.75rem; color: #94a3b8;">TECHNICAL OVERVIEW</span>
+    </header>
+
+    <main class="m-wrap">
+        <h2>How URBAPULSE Works</h2>
+
+        <div class="info-card">
+            <h3>1. Dual-Controller Hardware</h3>
+            <p>An Arduino Nano drives the 3-Road Smart LEDs (Main, School &amp; Hut Roads), warning buzzer, and public routing LCD #1, while an ESP32 handles live DHT11 &amp; MQ-6/135 telemetry, LCD #2, and Wi-Fi streaming.</p>
+        </div>
+
+        <div class="info-card">
+            <h3>2. High-Albedo &amp; Solar Shielding</h3>
+            <p>Reflective white road borders and solar-capped buildings bounce away solar heat while powering the node off-grid. Sensors sit 1 inch under the solar canopy (Stevenson Screen) for accurate shade readings.</p>
+        </div>
+
+        <div class="info-card">
+            <h3>3. Better Maps Health Routing</h3>
+            <p>Calculates path weights using Distance + Temperature + AQI—guiding pedestrians away from 44°C corridors onto cooled green lanes, cutting heat exposure by 6°C and pollution by over 40%.</p>
+        </div>
+
+        <div class="info-card">
+            <h3>4. Built For Everyone</h3>
+            <p>Created by Aditya Prakash, Hardik &amp; Vaibhav (MVN Sector-17, Faridabad) so both smartphone users and pedestrians without phones stay safe on city streets.</p>
+        </div>
+    </main>
+</body>
+</html>
