@@ -3,94 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UrbaPulse | Mobile Hub</title>
+    <title>UrbaPulse | City Resilience Engine</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            margin: 0;
-            background: #0b0f19;
-            color: #f8fafc;
-            font-family: system-ui, -apple-system, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .m-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 18px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(11, 15, 25, 0.92);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .m-logo { font-weight: 800; font-size: 1.2rem; letter-spacing: 1.5px; color: #00d2ff; text-decoration: none; }
-        .m-badge {
-            font-size: 0.7rem;
-            padding: 4px 10px;
-            border-radius: 20px;
-            background: rgba(0, 210, 255, 0.12);
-            color: #00d2ff;
-            border: 1px solid rgba(0, 210, 255, 0.3);
-        }
-        .m-hero { padding: 26px 18px 18px; }
-        .m-hero h1 { font-size: 1.85rem; line-height: 1.2; margin: 0 0 10px; }
-        .m-hero p { font-size: 0.92rem; line-height: 1.55; color: #94a3b8; margin: 0; }
+        nav { padding: 14px 16px; }
+        .m-hub { font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase; }
+        .m-hero { text-align: center; padding: 28px 18px 20px; }
+        .m-hero h1 { font-size: 1.75rem; margin: 0 0 8px; line-height: 1.2; }
+        .m-hero p { font-size: 0.8rem; color: var(--text-muted); max-width: 330px; margin: 0 auto; line-height: 1.45; }
         .m-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: 12px;
-            padding: 10px 18px 28px;
+            padding: 8px 14px 28px;
         }
         .m-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            padding: 18px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 14px;
             text-decoration: none;
-            color: #f8fafc;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
             transition: transform 0.15s ease, border-color 0.2s ease;
         }
-        .m-card:active { transform: scale(0.97); border-color: #00d2ff; }
-        .m-card.full { grid-column: span 2; background: linear-gradient(135deg, rgba(0, 210, 255, 0.14), rgba(15, 41, 66, 0.4)); border-color: rgba(0, 210, 255, 0.35); }
-        .m-card h3 { margin: 0 0 6px; font-size: 1.05rem; color: #00d2ff; }
-        .m-card p { margin: 0; font-size: 0.8rem; color: #94a3b8; line-height: 1.4; }
+        .m-card:active { transform: scale(0.97); border-color: var(--accent); }
+        .m-icon { font-size: 1.15rem; margin-bottom: 4px; }
+        .m-card h3 { margin: 0; font-size: 0.9rem; font-weight: 700; }
+        .m-card p { margin: 0; font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
     </style>
 </head>
 <body>
-    <header class="m-nav">
-        <a href="mobile-index.html" class="m-logo">URBAPULSE</a>
-        <span class="m-badge">SECTOR 17 • LIVE</span>
-    </header>
+    <nav>
+        <a href="mobile-index.html" class="logo" style="text-decoration: none;">URBAPULSE</a>
+        <span class="m-hub">SEC-17 FARIDABAD HUB</span>
+    </nav>
 
     <section class="m-hero">
         <h1>City Resilience Engine</h1>
-        <p>Don't just take the fastest route—take the healthiest one. Real-time urban heat &amp; AQI telemetry powered by solar IoT nodes.</p>
+        <p>Advancing urban thermal management through high-albedo infrastructure and real-time IoT sensory networks.</p>
     </section>
 
     <main class="m-grid">
-        <a href="mobile-status.html" class="m-card full">
-            <h3>Live Node Analytics</h3>
-            <p>View real-time Temperature, AQI, Humidity &amp; Carbon PPM from ESP32 Node-17-Alpha.</p>
-        </a>
         <a href="mobile-maps.html" class="m-card">
+            <span class="m-icon">🗺️</span>
             <h3>Better Maps</h3>
-            <p>Health-gradient shaded routing.</p>
+            <p>Access the Health-Gradient navigation system for optimized thermal routing.</p>
         </a>
         <a href="mobile-model.html" class="m-card">
-            <h3>3-Road Model</h3>
-            <p>Explore hardware &amp; cooling zones.</p>
+            <span class="m-icon">📦</span>
+            <h3>Project Blueprint</h3>
+            <p>Detailed schematic of the physical Urban Grid prototype and Infrastructure nodes.</p>
         </a>
-        <a href="mobile-about.html" class="m-card">
-            <h3>About Tech</h3>
-            <p>Stevenson shield &amp; dual-MCU design.</p>
+        <a href="mobile-status.html" class="m-card">
+            <span class="m-icon">📊</span>
+            <h3>Node Analytics</h3>
+            <p>Live telemetry from ESP32 sensor grid: AQI, Temperature, and CO₂.</p>
         </a>
         <a href="mobile-complain.html" class="m-card">
-            <h3>Report Issue</h3>
-            <p>Flag heat or smog hotspots to MCF.</p>
+            <span class="m-icon">⚠️</span>
+            <h3>Civic Action</h3>
+            <p>Public reporting interface for anomalous thermal readings and pollution hotspots.</p>
+        </a>
+        <a href="mobile-about.html" class="m-card">
+            <span class="m-icon">ℹ️</span>
+            <h3>Documentation</h3>
+            <p>Technical specifications of the Stevenson Screen and Project Architects info.</p>
+        </a>
+        <a href="mobile-admin.html" class="m-card">
+            <span class="m-icon">🔒</span>
+            <h3>Admin Portal</h3>
+            <p>Restricted access for Municipal Corporation of Faridabad authorities.</p>
         </a>
     </main>
 </body>
