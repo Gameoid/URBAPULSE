@@ -97,12 +97,44 @@ jobs:
           }
           EOF
 
-      - name: Install Capacitor & Build Android Project
+      - name: Install Capacitor & Configure Android Back Button
         run: |
           npm install
           npx cap add android
           sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
           sed -i 's/<activity/<activity android:screenOrientation="fullSensor"/' android/app/src/main/AndroidManifest.xml
+
+          cat << 'EOF' > android/app/src/main/java/com/urbapulse/app/MainActivity.java
+          package com.urbapulse.app;
+
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import androidx.activity.OnBackPressedCallback;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+                      @Override
+                      public void handleOnBackPressed() {
+                          WebView webView = getBridge().getWebView();
+                          String url = webView.getUrl();
+                          if (webView.canGoBack()) {
+                              webView.goBack();
+                          } else if (url != null && !url.endsWith("/index.html") && !url.endsWith("/mobile-index.html") && !url.endsWith("/")) {
+                              webView.loadUrl("http://localhost/index.html");
+                          } else {
+                              setEnabled(false);
+                              getOnBackPressedDispatcher().onBackPressed();
+                          }
+                      }
+                  });
+              }
+          }
+          EOF
+
           npx cap sync android
 
       - name: Compile Debug APK
