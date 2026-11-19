@@ -50,4 +50,4 @@ Our website turns live street sensor data into tools anyone can use:
 ---
 
 ## Team
-- **Aditya Prakash** & **Vaibhav** — Modern Vidya Niketan Sr. Sec. School (MVN-17), Sector-17, Faridabad, Ha
+- **Aditya**, **Vaibhav**, **Shreyansh** & **Kartik** — Modern Vidya Niketan Sr. Sec. School (MVN-17), Sector-17, Faridabad, Ha
