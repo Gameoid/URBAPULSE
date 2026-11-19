@@ -23,10 +23,67 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Prepare www folder and Capacitor config
+      - name: Prepare www folder, 9:16 Mobile CSS & Capacitor config
         run: |
-          mkdir -p www
+          mkdir -p www/css
           cp -r *.html css js media www/ 2>/dev/null || true
+
+          cat << 'EOF' >> www/css/style.css
+
+          /* --- AUTO 9:16 PORTRAIT PHONE LAYOUT FIX --- */
+          html, body {
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+            box-sizing: border-box !important;
+          }
+          @media (max-width: 768px) {
+            nav {
+              padding: 14px 16px !important;
+              flex-wrap: wrap !important;
+              gap: 8px !important;
+            }
+            .container {
+              padding: 20px 16px !important;
+              width: 100% !important;
+              box-sizing: border-box !important;
+            }
+            .status-header {
+              flex-direction: column !important;
+              align-items: flex-start !important;
+              gap: 8px !important;
+              margin-bottom: 20px !important;
+            }
+            .data-grid {
+              grid-template-columns: 1fr !important;
+              gap: 14px !important;
+            }
+            .metric-card {
+              padding: 22px 18px !important;
+            }
+            .metric-value {
+              font-size: 2.3rem !important;
+            }
+            .maps-layout, .model-layout {
+              grid-template-columns: 1fr !important;
+              height: auto !important;
+              gap: 16px !important;
+            }
+            .search-panel, .anatomy-list {
+              padding: 16px !important;
+              border-right: none !important;
+              border-bottom: 1px solid var(--border) !important;
+            }
+            #map {
+              height: 55vh !important;
+              min-height: 320px !important;
+            }
+            img, iframe, canvas, table {
+              max-width: 100% !important;
+              height: auto !important;
+            }
+          }
+          EOF
+
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.urbapulse.app",
@@ -44,6 +101,7 @@ jobs:
           npm install
           npx cap add android
           sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<activity/<activity android:screenOrientation="portrait"/' android/app/src/main/AndroidManifest.xml
           npx cap sync android
 
       - name: Compile Debug APK
