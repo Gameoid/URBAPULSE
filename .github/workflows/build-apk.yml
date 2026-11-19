@@ -116,6 +116,7 @@ jobs:
       - name: Compile Debug APK
         run: |
           cd android
+          sed -i 's/mavenCentral()/mavenCentral()\n        maven { url "https:\/\/maven-central.storage-download.googleapis.com\/maven2\/" }/g' build.gradle
           chmod +x gradlew
           ./gradlew assembleDebug
 
