@@ -23,7 +23,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Prepare www folder, Fix Zoom & Auto-Rotate CSS
+      - name: Prepare www folder, Orientation Switcher & Mobile CSS
         run: |
           mkdir -p www
           cp -r *.html css js media www/ 2>/dev/null || true
@@ -31,7 +31,7 @@ jobs:
           python3 - << 'PYEOF'
           import glob, re
 
-          fix_css = """
+          inject_block = """
           <style id="mobile-fit-fix">
             *, *::before, *::after { box-sizing: border-box !important; }
             html, body {
@@ -41,46 +41,41 @@ jobs:
               margin: 0 !important;
               -webkit-text-size-adjust: 100% !important;
             }
-            @media (max-width: 900px) {
+            @media (max-width: 900px) and (orientation: portrait) {
               html { font-size: 14px !important; }
-              nav {
-                padding: 12px 14px !important;
-                flex-wrap: wrap !important;
-                gap: 8px !important;
-              }
-              .container {
-                width: 100% !important;
-                max-width: 100vw !important;
-                padding: 16px 14px !important;
-              }
-              h1 { font-size: 1.8rem !important; }
-              h2 { font-size: 1.4rem !important; }
-              .status-header {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 6px !important;
-                margin-bottom: 16px !important;
-              }
-              .data-grid {
-                grid-template-columns: 1fr !important;
-                gap: 12px !important;
-              }
+              nav { padding: 12px 14px !important; flex-wrap: wrap !important; gap: 8px !important; }
+              .container { width: 100% !important; max-width: 100vw !important; padding: 16px 14px !important; }
+              h1 { font-size: 1.75rem !important; }
+              h2 { font-size: 1.35rem !important; }
+              .status-header { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; margin-bottom: 16px !important; }
+              .data-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
               .metric-card { padding: 18px 16px !important; }
               .metric-value { font-size: 2.2rem !important; }
-              .maps-layout, .model-layout {
-                grid-template-columns: 1fr !important;
-                height: auto !important;
-                gap: 14px !important;
-              }
-              .search-panel, .anatomy-list {
-                width: 100% !important;
-                padding: 14px !important;
-                border-right: none !important;
-              }
-              #map { height: 50vh !important; min-height: 280px !important; }
               img, iframe, canvas, table { max-width: 100% !important; height: auto !important; }
             }
           </style>
+          <script id="orientation-router">
+            (function() {
+              var mobileMap = {
+                "admin.html": "mobile-admin.html",
+                "complain.html": "mobile-complain.html",
+                "maps.html": "mobile-maps.html",
+                "model.html": "mobile-model.html"
+              };
+              function routeByOrientation() {
+                var page = window.location.pathname.split("/").pop() || "index.html";
+                var isPortrait = window.innerHeight > window.innerWidth && window.innerWidth <= 900;
+                if (isPortrait && mobileMap[page]) {
+                  window.location.replace(mobileMap[page]);
+                } else if (!isPortrait && page.indexOf("mobile-") === 0) {
+                  var desktopPage = page.replace("mobile-", "");
+                  window.location.replace(desktopPage);
+                }
+              }
+              routeByOrientation();
+              window.addEventListener("resize", routeByOrientation);
+            })();
+          </script>
           """
 
           for path in glob.glob("www/*.html"):
@@ -93,7 +88,7 @@ jobs:
                   flags=re.IGNORECASE,
               )
               if "</head>" in html:
-                  html = html.replace("</head>", fix_css + "\n</head>", 1)
+                  html = html.replace("</head>", inject_block + "\n</head>", 1)
               with open(path, "w", encoding="utf-8") as f:
                   f.write(html)
           PYEOF
