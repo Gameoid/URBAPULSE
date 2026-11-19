@@ -40,23 +40,15 @@ jobs:
               overflow-x: hidden !important;
               margin: 0 !important;
               -webkit-text-size-adjust: 100% !important;
-            }
-            @media (max-width: 900px) and (orientation: portrait) {
-              html { font-size: 14px !important; }
-              nav { padding: 12px 14px !important; flex-wrap: wrap !important; gap: 8px !important; }
-              .container { width: 100% !important; max-width: 100vw !important; padding: 16px 14px !important; }
-              h1 { font-size: 1.75rem !important; }
-              h2 { font-size: 1.35rem !important; }
-              .status-header { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; margin-bottom: 16px !important; }
-              .data-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-              .metric-card { padding: 18px 16px !important; }
-              .metric-value { font-size: 2.2rem !important; }
-              img, iframe, canvas, table { max-width: 100% !important; height: auto !important; }
+              scroll-behavior: smooth !important;
             }
           </style>
           <script id="orientation-router">
             (function() {
               var mobileMap = {
+                "index.html": "mobile-index.html",
+                "about.html": "mobile-about.html",
+                "status.html": "mobile-status.html",
                 "admin.html": "mobile-admin.html",
                 "complain.html": "mobile-complain.html",
                 "maps.html": "mobile-maps.html",
