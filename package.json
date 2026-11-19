@@ -1,0 +1,12 @@
+{
+  "name": "urbapulse",
+  "version": "1.0.0",
+  "description": "URBAPULSE Smart City App",
+  "dependencies": {
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}
