@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>UrbaPulse | Mobile Routing</title>
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
     <style>
         :root {
             --accent: #00d2ff;
@@ -25,31 +23,13 @@
             color: white;
         }
 
-        /* --- THE REAL LEAFLET MAP CONTAINER --- */
         #mobile-map {
             width: 100vw;
             height: 100vh;
             position: absolute;
             top: 0; left: 0;
-            z-index: 1; /* Map stays in the back */
-        }
-
-        /* Hide the leaflet zoom buttons on mobile for a cleaner look */
-        .leaflet-control-zoom { display: none !important; }
-
-        /* Custom pulsing dot for current location */
-        .pulse-marker {
-            background: var(--accent);
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(0, 210, 255, 0.8);
-            animation: pulse-dot 2s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(0, 210, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
+            z-index: 1;
+            border: 0;
         }
 
         /* --- COMPACT TOP SEARCH --- */
@@ -61,17 +41,43 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             padding: 10px 15px;
-            z-index: 10; /* Floats over map */
+            z-index: 10;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
         .input-row { display: flex; align-items: center; margin-bottom: 6px; }
         .input-row:last-child { margin-bottom: 0; }
         .input-icon { width: 20px; text-align: center; font-size: 10px; color: var(--accent); margin-right: 8px; }
+        
         .input-field {
             flex-grow: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);
-            padding: 8px 12px; border-radius: 6px; color: white; font-size: 0.85rem; outline: none;
+            padding: 8px 40px 8px 12px; 
+            border-radius: 6px; color: white; font-size: 0.85rem; outline: none;
         }
+        .input-field:focus { border-color: var(--accent); }
+
+        /* Mobile Swap Button */
+        .swap-btn-mobile {
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(18, 20, 29, 0.95);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--accent);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 1.1rem;
+            transition: 0.2s;
+        }
+        .swap-btn-mobile:active { transform: translateY(-50%) scale(0.9); }
 
         /* --- ULTRA-COMPACT BOTTOM SHEET --- */
         #bottom-sheet {
@@ -81,14 +87,13 @@
             backdrop-filter: blur(20px);
             border-radius: 20px 20px 0 0;
             padding: 15px 15px 20px 15px;
-            z-index: 100; /* Floats over map */
+            z-index: 100;
             box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
             border-top: 1px solid rgba(255,255,255,0.05);
         }
 
         .handle { width: 35px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 10px; margin: 0 auto 12px; }
 
-        /* Route Cards */
         .route-card {
             background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
             border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;
@@ -113,22 +118,31 @@
 </head>
 <body>
 
-    <div id="mobile-map"></div>
+    <iframe 
+        id="mobile-map"
+        src="https://maps.google.com/maps?saddr=Sec-17+Metro+Station+Faridabad&daddr=Sector+17+Market+Hub+Faridabad&output=embed"
+        allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
 
     <div class="top-search-card">
         <div class="input-row">
             <div class="input-icon">⚪</div>
-            <input type="text" class="input-field" value="Sec-17 Metro Station" readonly>
+            <input type="text" id="origin-input" class="input-field" value="Sec-17 Metro Station, Faridabad" placeholder="Enter Origin...">
         </div>
+        
+        <!-- Mobile Swap Button -->
+        <button class="swap-btn-mobile" onclick="swapLocations()">⇅</button>
+
         <div class="input-row">
             <div class="input-icon" style="color: var(--danger);">📍</div>
-            <input type="text" class="input-field" value="Sector 17 Market Hub" readonly>
+            <input type="text" id="dest-input" class="input-field" value="Sector 17 Market Hub, Faridabad" placeholder="Enter Destination...">
         </div>
     </div>
 
     <div id="bottom-sheet">
         <div class="handle"></div>
         
+        <!-- Static Shortest Path -->
         <div class="route-card" id="card-fast" onclick="selectRoute('fast')">
             <div class="card-indicator card-danger"></div>
             <div class="route-header">
@@ -141,6 +155,7 @@
             </div>
         </div>
 
+        <!-- Static Health Gradient -->
         <div class="route-card selected" id="card-health" onclick="selectRoute('health')">
             <div class="card-indicator card-safe"></div>
             <div class="route-header">
@@ -157,63 +172,64 @@
         <button class="nav-btn" onclick="startNavigation()">Start Navigation</button>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize Map centered near Faridabad Sec 17
-        var map = L.map('mobile-map', { zoomControl: false }).setView([28.4024, 77.3181], 15);
+        let lastMobileQuery = "";
 
-        // Add CartoDB Light tiles (matches your desktop screenshot perfectly)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CARTO',
-            maxZoom: 19
-        }).addTo(map);
+        // SWAP FUNCTION
+        function swapLocations() {
+            const originInput = document.getElementById('origin-input');
+            const destInput = document.getElementById('dest-input');
+            
+            const temp = originInput.value;
+            originInput.value = destInput.value;
+            destInput.value = temp;
 
-        // --- MAP ROUTE COORDINATES ---
-        var startPoint = [28.3960, 77.3150]; // Bottom Left (Origin)
-        var endPoint = [28.4060, 77.3220];   // Bottom Right (Destination)
-        var detourPoint = [28.4090, 77.3160]; // Top Left (The Safe Detour)
+            updateRouteMap(true);
+        }
 
-        // Draw Shortest Path (Red Dashed)
-        var fastRoute = L.polyline([startPoint, endPoint], {
-            color: '#ff4d4d',
-            weight: 4,
-            dashArray: '10, 10',
-            opacity: 0.4 // Starts dimmed
-        }).addTo(map);
+        // MAP UPDATE FUNCTION
+        function updateRouteMap(force = false) {
+            const origin = document.getElementById('origin-input').value.trim();
+            const dest = document.getElementById('dest-input').value.trim();
+            const mapFrame = document.getElementById('mobile-map');
+            const currentQuery = origin + "->" + dest;
 
-        // Draw Health Gradient (Green Solid)
-        var healthRoute = L.polyline([startPoint, detourPoint, endPoint], {
-            color: '#00e676',
-            weight: 6,
-            opacity: 1 // Starts active
-        }).addTo(map);
+            if (!force && currentQuery === lastMobileQuery) return;
+            lastMobileQuery = currentQuery;
 
-        // Add User Location Dot (Cyan)
-        var userIcon = L.divIcon({ className: 'pulse-marker', iconSize: [16, 16] });
-        L.marker([28.4010, 77.3180], { icon: userIcon }).addTo(map);
+            if (origin && dest) {
+                mapFrame.src = `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(dest)}&output=embed`;
+            } else if (dest || origin) {
+                const singlePlace = dest || origin;
+                mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(singlePlace)}&output=embed`;
+            }
+        }
 
-        // Zoom map to fit both routes perfectly
-        map.fitBounds(healthRoute.getBounds(), { paddingBottomRight: [0, 250] });
+        ['origin-input', 'dest-input'].forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('blur', () => updateRouteMap());
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    updateRouteMap(true);
+                }
+            });
+        });
 
         // --- UI INTERACTION LOGIC ---
         function selectRoute(type) {
-            // Reset UI Cards
             document.getElementById('card-fast').classList.remove('selected');
             document.getElementById('card-health').classList.remove('selected');
 
-            // Switch Map Lines
             if(type === 'fast') {
                 document.getElementById('card-fast').classList.add('selected');
-                fastRoute.setStyle({ weight: 6, opacity: 1 });
-                healthRoute.setStyle({ weight: 4, opacity: 0.4 });
             } else {
                 document.getElementById('card-health').classList.add('selected');
-                fastRoute.setStyle({ weight: 4, opacity: 0.4 });
-                healthRoute.setStyle({ weight: 6, opacity: 1 });
             }
         }
 
         function startNavigation() {
+            updateRouteMap(true);
             const btn = document.querySelector('.nav-btn');
             btn.innerHTML = "Rerouting...";
             setTimeout(() => {

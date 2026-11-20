@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UrbaPulse | Better Maps</title>
     <link rel="stylesheet" href="css/style.css">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         .maps-layout {
             display: grid;
@@ -22,10 +20,51 @@
             gap: 20px;
         }
 
+        /* Swap Button Container */
+        .inputs-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .form-group input {
+            padding-right: 45px; 
+        }
+
+        .swap-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: var(--transition);
+            z-index: 10;
+        }
+
+        .swap-btn:hover {
+            background: var(--border);
+            color: white;
+        }
+
         #map {
             width: 100%;
             height: 100%;
             background: #0b0f19;
+            border: 0;
+            display: block;
         }
 
         .route-card {
@@ -68,33 +107,49 @@
         <aside class="search-panel">
             <h2 style="margin: 0; font-size: 1.4rem;">Route Planning</h2>
             
-            <div class="form-group" style="margin-top: 10px;">
-                <label>Origin</label>
-                <input type="text" value="Sec-17 Metro Station" readonly>
-            </div>
-            <div class="form-group">
-                <label>Destination</label>
-                <input type="text" value="Sector 17 Market Hub" readonly>
+            <div class="inputs-wrapper">
+                <div class="form-group">
+                    <label>Origin</label>
+                    <input type="text" id="origin-input" value="Sec-17 Metro Station, Faridabad" placeholder="Enter Origin...">
+                </div>
+                
+                <!-- Swap Button -->
+                <button class="swap-btn" onclick="swapLocations()" title="Swap locations">⇅</button>
+
+                <div class="form-group">
+                    <label>Destination</label>
+                    <input type="text" id="dest-input" value="Sector 17 Market Hub, Faridabad" placeholder="Enter Destination...">
+                </div>
             </div>
 
             <hr style="border: 0.5px solid var(--border); width: 100%;">
 
             <div id="route-options">
-                <div class="route-card hot">
-                    <h4 style="margin: 0;">Shortest Path (Fast)</h4>
-                    <p style="font-size: 0.8rem; color: var(--danger);">Exposure: 44°C | AQI: 195</p>
+                <!-- Static Shortest Path -->
+                <div class="route-card hot" onclick="updateDesktopMap(true)">
+                    <h4 style="margin: 0; display: flex; justify-content: space-between;">
+                        <span>Shortest Path (Fast)</span> <span>12 min</span>
+                    </h4>
+                    <p style="font-size: 0.8rem; color: var(--danger); margin-bottom: 0;">Exposure: 44°C | AQI: 195</p>
                 </div>
                 
-                <div class="route-card safe" style="margin-top: 15px;">
-                    <h4 style="margin: 0;">Health Gradient (Rec.)</h4>
-                    <p style="font-size: 0.8rem; color: var(--success);">Exposure: 38°C | AQI: 110</p>
+                <!-- Static Health Gradient -->
+                <div class="route-card safe" style="margin-top: 15px;" onclick="updateDesktopMap(true)">
+                    <h4 style="margin: 0; display: flex; justify-content: space-between;">
+                        <span>Health Gradient (Rec.)</span> <span>14 min</span>
+                    </h4>
+                    <p style="font-size: 0.8rem; color: var(--success); margin-bottom: 5px;">Exposure: 38°C | AQI: 110</p>
                     <small style="color: var(--text-muted);">+2 mins walk via Shaded Corridor</small>
                 </div>
             </div>
         </aside>
 
         <section style="position: relative;">
-            <div id="map"></div>
+            <iframe 
+                id="map"
+                src="https://maps.google.com/maps?saddr=Sec-17+Metro+Station+Faridabad&daddr=Sector+17+Market+Hub+Faridabad&output=embed"
+                allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
             
             <div class="legend-overlay">
                 <div class="legend-item"><div class="color-box" style="background: var(--danger);"></div> High Heat/AQI Zone</div>
@@ -104,43 +159,49 @@
         </section>
     </main>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initializing map centered on Faridabad Sector 17
-        var map = L.map('map').setView([28.4089, 77.3178], 15);
+        let lastQuery = "";
 
-        // Using CartoDB Voyager tiles as per your project notes
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
-            attribution: '©OpenStreetMap ©CartoDB',
-            subdomains: 'abcd',
-            maxZoom: 20
-        }).addTo(map);
+        // SWAP FUNCTION
+        function swapLocations() {
+            const originInput = document.getElementById('origin-input');
+            const destInput = document.getElementById('dest-input');
+            
+            const temp = originInput.value;
+            originInput.value = destInput.value;
+            destInput.value = temp;
 
-        // Simulating the "Health Gradient" Path segments
-        // In your full version, these colors are updated via ESP32 sensor logic
-        var hotCoords = [
-            [28.4110, 77.3150], [28.4089, 77.3178], [28.4060, 77.3210]
-        ];
-        var safeCoords = [
-            [28.4110, 77.3150], [28.4120, 77.3185], [28.4060, 77.3210]
-        ];
+            updateDesktopMap(true);
+        }
 
-        L.polyline(hotCoords, {color: '#ff4b2b', weight: 5, dashArray: '10, 10'}).addTo(map)
-            .bindPopup("High Thermal Weight: 44°C Surface Temp");
+        // MAP UPDATE FUNCTION
+        function updateDesktopMap(force = false) {
+            const origin = document.getElementById('origin-input').value.trim();
+            const dest = document.getElementById('dest-input').value.trim();
+            const mapFrame = document.getElementById('map');
+            const currentQuery = origin + "->" + dest;
 
-        L.polyline(safeCoords, {color: '#27ae60', weight: 6}).addTo(map)
-            .bindPopup("Health Gradient: Optimized via Hydronic Cooling Zone");
+            if (!force && currentQuery === lastQuery) return;
+            lastQuery = currentQuery;
 
-        // Adding a marker for your physical model's sensor node
-        L.circleMarker([28.4089, 77.3178], {
-            radius: 10,
-            fillColor: "#00d2ff",
-            color: "#fff",
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.8
-        }).addTo(map).bindPopup("<b>ESP32 Node-17-Alpha</b><br>Stationed at Solar Bus Stand");
+            if (origin && dest) {
+                mapFrame.src = `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(dest)}&output=embed`;
+            } else if (dest || origin) {
+                const singlePlace = dest || origin;
+                mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(singlePlace)}&output=embed`;
+            }
+        }
+
+        ['origin-input', 'dest-input'].forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('blur', () => updateDesktopMap());
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    updateDesktopMap(true);
+                }
+            });
+        });
     </script>
 </body>
 </html>

@@ -1,0 +1,151 @@
+name: Build URBAPULSE Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Prepare www folder, Orientation Switcher & Mobile CSS
+        run: |
+          mkdir -p www
+          cp -r *.html css js media www/ 2>/dev/null || true
+
+          python3 - << 'PYEOF'
+          import glob, re
+
+          inject_block = """
+          <style id="mobile-fit-fix">
+            *, *::before, *::after { box-sizing: border-box !important; }
+            html, body {
+              width: 100% !important;
+              max-width: 100vw !important;
+              overflow-x: hidden !important;
+              margin: 0 !important;
+              -webkit-text-size-adjust: 100% !important;
+              scroll-behavior: smooth !important;
+            }
+          </style>
+          <script id="orientation-router">
+            (function() {
+              var mobileMap = {
+                "index.html": "mobile-index.html",
+                "about.html": "mobile-about.html",
+                "status.html": "mobile-status.html",
+                "admin.html": "mobile-admin.html",
+                "complain.html": "mobile-complain.html",
+                "maps.html": "mobile-maps.html",
+                "model.html": "mobile-model.html"
+              };
+              function routeByOrientation() {
+                var page = window.location.pathname.split("/").pop() || "index.html";
+                var isPortrait = window.innerHeight > window.innerWidth && window.innerWidth <= 900;
+                if (isPortrait && mobileMap[page]) {
+                  window.location.replace(mobileMap[page]);
+                } else if (!isPortrait && page.indexOf("mobile-") === 0) {
+                  var desktopPage = page.replace("mobile-", "");
+                  window.location.replace(desktopPage);
+                }
+              }
+              routeByOrientation();
+              window.addEventListener("resize", routeByOrientation);
+            })();
+          </script>
+          """
+
+          for path in glob.glob("www/*.html"):
+              with open(path, "r", encoding="utf-8") as f:
+                  html = f.read()
+              html = re.sub(
+                  r'<meta\s+name=["\']viewport["\'][^>]*>',
+                  '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">',
+                  html,
+                  flags=re.IGNORECASE,
+              )
+              if "</head>" in html:
+                  html = html.replace("</head>", inject_block + "\n</head>", 1)
+              with open(path, "w", encoding="utf-8") as f:
+                  f.write(html)
+          PYEOF
+
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.urbapulse.app",
+            "appName": "URBAPULSE",
+            "webDir": "www",
+            "server": {
+              "androidScheme": "http",
+              "cleartext": true
+            }
+          }
+          EOF
+
+      - name: Install Capacitor & Configure Android Back Button
+        run: |
+          npm install
+          npx cap add android
+          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<activity/<activity android:screenOrientation="fullSensor"/' android/app/src/main/AndroidManifest.xml
+
+          cat << 'EOF' > android/app/src/main/java/com/urbapulse/app/MainActivity.java
+          package com.urbapulse.app;
+
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import androidx.activity.OnBackPressedCallback;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+                      @Override
+                      public void handleOnBackPressed() {
+                          WebView webView = getBridge().getWebView();
+                          String url = webView.getUrl();
+                          if (webView.canGoBack()) {
+                              webView.goBack();
+                          } else if (url != null && !url.endsWith("/index.html") && !url.endsWith("/mobile-index.html") && !url.endsWith("/")) {
+                              webView.loadUrl("http://localhost/index.html");
+                          } else {
+                              setEnabled(false);
+                              getOnBackPressedDispatcher().onBackPressed();
+                          }
+                      }
+                  });
+              }
+          }
+          EOF
+
+          npx cap sync android
+
+      - name: Compile Debug APK
+        run: |
+          cd android
+          sed -i 's/mavenCentral()/mavenCentral()\n        maven { url "https:\/\/maven-central.storage-download.googleapis.com\/maven2\/" }/g' build.gradle
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: URBAPULSE-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
