@@ -156,30 +156,40 @@
         </div>
     </main>
 
-    <script>
+<script>
         const BLYNK_TOKEN = "iYk2owJr0iWJsfVhgVRNF8PuKsKjXffK";
-        // Optional: if running offline without internet, paste your ESP32 IP below (e.g. "192.168.43.120")
-        const ESP32_LOCAL_IP = "192.168.1.35";
+        const BLYNK_HOSTS = [
+            "blr1.blynk.cloud",
+            "sgp1.blynk.cloud",
+            "blynk.cloud",
+            "fra1.blynk.cloud",
+            "ny3.blynk.cloud",
+            "lon1.blynk.cloud"
+        ];
+        let activeHost = "blr1.blynk.cloud";
+
+        async function fetchFromBlynk() {
+            const order = [activeHost, ...BLYNK_HOSTS.filter(h => h !== activeHost)];
+            for (const host of order) {
+                try {
+                    const res = await fetch(
+                        `https://${host}/external/api/get?token=${BLYNK_TOKEN}&v0&v1&v2`
+                    );
+                    if (res.ok) {
+                        activeHost = host;
+                        return await res.json();
+                    }
+                } catch (e) {}
+            }
+            throw new Error("Could not reach Blynk Cloud");
+        }
 
         async function fetchLiveTelemetry() {
             try {
-                let temp, hum, aqi;
-
-                if (ESP32_LOCAL_IP && window.location.protocol !== "https:") {
-                    const res = await fetch(`http://${ESP32_LOCAL_IP}/data`);
-                    const data = await res.json();
-                    temp = parseFloat(data.temperature);
-                    hum  = parseFloat(data.humidity);
-                    aqi  = parseInt(data.aqi, 10);
-                } else {
-                    const res = await fetch(
-                        `https://blynk.cloud/external/api/get?token=${BLYNK_TOKEN}&v0&v1&v2`
-                    );
-                    const data = await res.json();
-                    temp = parseFloat(data.v0);
-                    hum  = parseFloat(data.v1);
-                    aqi  = parseInt(data.v2, 10);
-                }
+                const data = await fetchFromBlynk();
+                const temp = parseFloat(data.v0);
+                const hum  = parseFloat(data.v1);
+                const aqi  = parseInt(data.v2, 10);
 
                 if (!isNaN(temp)) {
                     document.getElementById("temp-val").innerText = temp.toFixed(1);
@@ -188,7 +198,7 @@
                     if (temp >= 38) {
                         tempTag.innerText = "Critical";
                         tempTag.className = "status-tag tag-danger";
-                        tempNote.innerText = "Triggering Ultrasonic Misters...";
+                        tempNote.innerText = "Triggering Misting Sprinklers...";
                     } else {
                         tempTag.innerText = "Safe";
                         tempTag.className = "status-tag tag-safe";
@@ -202,7 +212,6 @@
 
                 if (!isNaN(aqi)) {
                     document.getElementById("aqi-val").innerText = aqi;
-                    // Estimate CO2 PPM from AQI reading
                     const ppm = Math.round(350 + (aqi * 1.4));
                     document.getElementById("ppm-val").innerText = ppm;
 
@@ -216,16 +225,14 @@
                     }
                 }
 
-                const now = new Date();
-                document.getElementById("time").innerText = now.toLocaleTimeString();
+                document.getElementById("time").innerText = new Date().toLocaleTimeString();
             } catch (err) {
-                console.log("Waiting for ESP32 stream...", err);
+                console.log("Waiting for Blynk Cloud stream...", err);
             }
         }
 
-        setInterval(fetchLiveTelemetry, 1500);
+        setInterval(fetchLiveTelemetry, 2000);
         fetchLiveTelemetry();
     </script>
-
 </body>
 </html>
