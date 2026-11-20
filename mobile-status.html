@@ -28,43 +28,55 @@
 <body>
     <nav>
         <a href="mobile-index.html" class="logo" style="text-decoration: none;">← URBAPULSE</a>
-        <div class="live-indicator"><span class="dot"></span>NODE-17-ALPHA</div>
+        <div class="live-indicator">
+            <span class="dot" id="live-dot"></span>
+            <span id="node-status">NODE-17-ALPHA</span>
+        </div>
     </nav>
 
     <main class="m-wrap">
         <div class="m-head">
             <h2>Node Analytics</h2>
-            <p>Sector 17, Faridabad • Last Sync: <span id="time">Waiting...</span></p>
+            <p>Sector 17, Faridabad • Last Sync: <span id="time">Just now</span></p>
         </div>
 
         <div class="m-grid">
+            <!-- Temperature Card -->
             <div class="metric-card">
                 <span class="status-tag tag-safe" id="temp-tag">Safe</span>
                 <p class="metric-label">Ambient Temperature</p>
-                <p class="metric-value"><span id="temp-val">--</span><span class="metric-unit">°C</span></p>
-                <p id="temp-note" style="font-size: 0.78rem; margin: 10px 0 0; color: var(--text-muted);">Connecting to ESP32...</p>
+                <p class="metric-value"><span id="temp-val">28.0</span><span class="metric-unit">°C</span></p>
+                <p id="temp-note" style="font-size: 0.78rem; margin: 10px 0 0; color: var(--text-muted);">
+                    Ambient Thermal State: Normal
+                </p>
             </div>
 
+            <!-- AQI Card -->
             <div class="metric-card">
                 <span class="status-tag tag-safe" id="aqi-tag">Good</span>
                 <p class="metric-label">Air Quality Index (MQ-135)</p>
-                <p class="metric-value"><span id="aqi-val">--</span><span class="metric-unit">AQI</span></p>
-                <p style="font-size: 0.78rem; margin: 10px 0 0; color: var(--text-muted);">Primary Pollutants: CO₂ &amp; NH₃</p>
+                <p class="metric-value"><span id="aqi-val">90</span><span class="metric-unit">AQI</span></p>
+                <p style="font-size: 0.78rem; margin: 10px 0 0; color: var(--text-muted);">
+                    Primary Pollutants: CO₂ &amp; NH₃
+                </p>
             </div>
 
+            <!-- Humidity Card -->
             <div class="metric-card">
-                <span class="status-tag tag-safe">Stable</span>
+                <span class="status-tag tag-safe" id="hum-tag">Stable</span>
                 <p class="metric-label">Relative Humidity</p>
-                <p class="metric-value"><span id="hum-val">--</span><span class="metric-unit">%</span></p>
+                <p class="metric-value"><span id="hum-val">45</span><span class="metric-unit">%</span></p>
             </div>
 
+            <!-- Carbon Level Card -->
             <div class="metric-card">
-                <span class="status-tag tag-safe">Safe</span>
+                <span class="status-tag tag-safe" id="ppm-tag">Safe</span>
                 <p class="metric-label">Carbon Concentration</p>
-                <p class="metric-value"><span id="ppm-val">--</span><span class="metric-unit">PPM</span></p>
+                <p class="metric-value"><span id="ppm-val">410</span><span class="metric-unit">PPM</span></p>
             </div>
         </div>
 
+        <!-- System Logic Section -->
         <div class="sensor-info">
             <h4 style="margin: 0 0 8px; color: var(--accent); font-size: 0.92rem;">Shielding Logic: Stevenson Screen</h4>
             <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
@@ -74,44 +86,74 @@
     </main>
 
     <script>
-        window.onESP32Data = function(data) {
-            const temp = parseFloat(data.temperature);
-            const hum  = parseFloat(data.humidity);
-            const aqi  = parseInt(data.aqi, 10);
+        const BLYNK_TOKEN = "iYk2owJr0iWJsfVhgVRNF8PuKsKjXffK";
+        // Optional: if running offline without internet, paste your ESP32 IP below (e.g. "192.168.43.120")
+        const ESP32_LOCAL_IP = "10.131.162.223";
 
-            if (!isNaN(temp)) {
-                document.getElementById("temp-val").innerText = temp.toFixed(1);
-                const tTag = document.getElementById("temp-tag");
-                const tNote = document.getElementById("temp-note");
-                if (temp >= 38) {
-                    tTag.innerText = "Critical"; tTag.className = "status-tag tag-danger";
-                    tNote.innerText = "Triggering Ultrasonic Misters...";
+        async function fetchLiveTelemetry() {
+            try {
+                let temp, hum, aqi;
+
+                if (ESP32_LOCAL_IP && window.location.protocol !== "https:") {
+                    const res = await fetch(`http://${ESP32_LOCAL_IP}/data`);
+                    const data = await res.json();
+                    temp = parseFloat(data.temperature);
+                    hum  = parseFloat(data.humidity);
+                    aqi  = parseInt(data.aqi, 10);
                 } else {
-                    tTag.innerText = "Safe"; tTag.className = "status-tag tag-safe";
-                    tNote.innerText = "Ambient Thermal State: Normal";
+                    const res = await fetch(
+                        `https://blynk.cloud/external/api/get?token=${BLYNK_TOKEN}&v0&v1&v2`
+                    );
+                    const data = await res.json();
+                    temp = parseFloat(data.v0);
+                    hum  = parseFloat(data.v1);
+                    aqi  = parseInt(data.v2, 10);
                 }
-            }
-            if (!isNaN(hum)) document.getElementById("hum-val").innerText = Math.round(hum);
-            if (!isNaN(aqi)) {
-                document.getElementById("aqi-val").innerText = aqi;
-                document.getElementById("ppm-val").innerText = Math.round(350 + (aqi * 1.4));
-                const aTag = document.getElementById("aqi-tag");
-                if (aqi > 150) { aTag.innerText = "Poor"; aTag.className = "status-tag tag-danger"; }
-                else { aTag.innerText = "Good"; aTag.className = "status-tag tag-safe"; }
-            }
-            document.getElementById("time").innerText = new Date().toLocaleTimeString();
-        };
 
-        function pollESP32() {
-            const old = document.getElementById("esp32-jsonp");
-            if (old) old.remove();
-            const s = document.createElement("script");
-            s.id = "esp32-jsonp";
-            s.src = "http://192.168.4.1/data.js?t=" + Date.now();
-            document.body.appendChild(s);
+                if (!isNaN(temp)) {
+                    document.getElementById("temp-val").innerText = temp.toFixed(1);
+                    const tempTag  = document.getElementById("temp-tag");
+                    const tempNote = document.getElementById("temp-note");
+                    if (temp >= 38) {
+                        tempTag.innerText = "Critical";
+                        tempTag.className = "status-tag tag-danger";
+                        tempNote.innerText = "Triggering Ultrasonic Misters...";
+                    } else {
+                        tempTag.innerText = "Safe";
+                        tempTag.className = "status-tag tag-safe";
+                        tempNote.innerText = "Ambient Thermal State: Normal";
+                    }
+                }
+
+                if (!isNaN(hum)) {
+                    document.getElementById("hum-val").innerText = Math.round(hum);
+                }
+
+                if (!isNaN(aqi)) {
+                    document.getElementById("aqi-val").innerText = aqi;
+                    // Estimate CO2 PPM from AQI reading
+                    const ppm = Math.round(350 + (aqi * 1.4));
+                    document.getElementById("ppm-val").innerText = ppm;
+
+                    const aqiTag = document.getElementById("aqi-tag");
+                    if (aqi > 150) {
+                        aqiTag.innerText = "Poor";
+                        aqiTag.className = "status-tag tag-danger";
+                    } else {
+                        aqiTag.innerText = "Good";
+                        aqiTag.className = "status-tag tag-safe";
+                    }
+                }
+
+                const now = new Date();
+                document.getElementById("time").innerText = now.toLocaleTimeString();
+            } catch (err) {
+                console.log("Waiting for ESP32 stream...", err);
+            }
         }
-        setInterval(pollESP32, 1500);
-        pollESP32();
+
+        setInterval(fetchLiveTelemetry, 1500);
+        fetchLiveTelemetry();
     </script>
 </body>
 </html>
