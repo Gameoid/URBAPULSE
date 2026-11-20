@@ -86,36 +86,15 @@
     </main>
 
 <script>
-        const BLYNK_TOKEN = "iYk2owJr0iWJsfVhgVRNF8PuKsKjXffK";
-        const BLYNK_HOSTS = [
-            "blr1.blynk.cloud",
-            "sgp1.blynk.cloud",
-            "blynk.cloud",
-            "fra1.blynk.cloud",
-            "ny3.blynk.cloud",
-            "lon1.blynk.cloud"
-        ];
-        let activeHost = "blr1.blynk.cloud";
-
-        async function fetchFromBlynk() {
-            const order = [activeHost, ...BLYNK_HOSTS.filter(h => h !== activeHost)];
-            for (const host of order) {
-                try {
-                    const res = await fetch(
-                        `https://${host}/external/api/get?token=${BLYNK_TOKEN}&v0&v1&v2`
-                    );
-                    if (res.ok) {
-                        activeHost = host;
-                        return await res.json();
-                    }
-                } catch (e) {}
-            }
-            throw new Error("Could not reach Blynk Cloud");
-        }
+        const BLYNK_TOKEN = "CKoY_lFmYduxAk27b24SPN-6FG5K-Peq";
+        const BLYNK_URL = `https://blr1.blynk.cloud/external/api/get?token=${BLYNK_TOKEN}&v0&v1&v2`;
 
         async function fetchLiveTelemetry() {
             try {
-                const data = await fetchFromBlynk();
+                const res = await fetch(BLYNK_URL);
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                const data = await res.json();
+
                 const temp = parseFloat(data.v0);
                 const hum  = parseFloat(data.v1);
                 const aqi  = parseInt(data.v2, 10);
